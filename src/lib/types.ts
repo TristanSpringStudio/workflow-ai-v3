@@ -18,35 +18,33 @@ export interface Contributor {
   interviewedAt?: string;
 }
 
-// ─── Task: the core unit of the intelligence layer ───
+// ─── Task (Workflow): the core unit of the intelligence layer ───
 export interface Task {
   id: string;
   title: string;
   description: string;
   department: string;
   contributors: string[]; // contributor IDs
-  frequency: string; // "daily", "weekly", "per-project", etc.
-  timeSpent: string; // "2 hours", "30 minutes", etc.
+  frequency: string;
+  timeSpent: string;
   tools: string[];
-  // How the task flows
-  inputs: TaskIO[]; // what comes in, from where
+  inputs: TaskIO[];
   steps: TaskStep[];
-  outputs: TaskIO[]; // what goes out, to where
-  // Pain
+  outputs: TaskIO[];
   painPoints: string[];
   isBottleneck: boolean;
-  // Recommendation (if one exists)
   recommendation?: TaskRecommendation;
-  // Meta
+  // Knowledge / provenance
+  knowledge: KnowledgeCitation[];
   tags: string[];
   lastUpdated: string;
-  addedBy: string; // contributor ID
+  addedBy: string;
 }
 
 export interface TaskIO {
   what: string;
-  fromOrTo: string; // department, person, or tool
-  method: string; // email, slack, manual, automated
+  fromOrTo: string;
+  method: string;
 }
 
 export interface TaskStep {
@@ -55,6 +53,14 @@ export interface TaskStep {
   description: string;
   actor: "human" | "tool" | "ai";
   tool?: string;
+  toolIcon?: string; // tool name for logo
+  // Touchpoints: people involved in this step
+  touchpoints?: string[]; // contributor IDs
+  // Shared step: other task IDs that share this same step
+  sharedWith?: { taskId: string; taskTitle: string }[];
+  // AI readiness
+  aiReady?: boolean;
+  aiReadyNote?: string;
 }
 
 // ─── Recommendation: the "after" for a task ───
@@ -67,20 +73,39 @@ export interface TaskRecommendation {
   };
   priority: "critical" | "high" | "medium" | "low";
   difficulty: "easy" | "moderate" | "complex";
-  // The improved flow
   newSteps: TaskStep[];
   aiHandles: string[];
   humanDecides: string[];
   phase: 1 | 2 | 3;
 }
 
-// ─── Department (derived from tasks + contributors) ───
+// ─── Knowledge citation ───
+export interface KnowledgeCitation {
+  contributorId: string;
+  quote: string;
+  interviewDate: string;
+}
+
+// ─── Assessment report ───
+export interface Assessment {
+  overallScore: number; // 0-100
+  summary: string;
+  strengths: string[];
+  improvements: string[];
+  quickWins: string[];
+  estimatedImpact: {
+    timeSaved: string;
+    costSaved: string;
+  };
+}
+
+// ─── Department (derived) ───
 export interface Department {
   name: string;
   contributors: Contributor[];
   taskCount: number;
   bottleneckCount: number;
-  aiReadiness: number; // 0-100
+  aiReadiness: number;
 }
 
 // ─── Roadmap Phase ───
@@ -89,6 +114,6 @@ export interface RoadmapPhase {
   name: string;
   duration: string;
   description: string;
-  taskIds: string[]; // tasks with recommendations in this phase
+  taskIds: string[];
   milestones: string[];
 }

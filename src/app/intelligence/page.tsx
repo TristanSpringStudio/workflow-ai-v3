@@ -1,121 +1,119 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import AppShell from "@/components/AppShell";
-import SwimLaneMap from "@/components/SwimLaneMap";
-import TaskPanel from "@/components/TaskPanel";
-import { tasks, getDepartments, contributors } from "@/lib/mock-data";
-import type { Task } from "@/lib/types";
+import { tasks, contributors } from "@/lib/mock-data";
+
+const DEPT_COLORS: Record<string, string> = {
+  Marketing: "#3b82f6", Sales: "#22c55e", Operations: "#f59e0b",
+  Engineering: "#6366f1", Product: "#ec4899", Finance: "#64748b",
+};
+
+function timeAgo(date: string) {
+  const days = Math.floor((Date.now() - new Date(date).getTime()) / (1000 * 60 * 60 * 24));
+  if (days === 0) return "Today";
+  if (days === 1) return "1 day ago";
+  return `${days} days ago`;
+}
 
 export default function IntelligencePage() {
-  const departments = getDepartments();
-  const deptNames = departments.map((d) => d.name);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [highlightPerson, setHighlightPerson] = useState<string | null>(null);
-  const [showFilter, setShowFilter] = useState<"all" | "bottleneck" | "ai">("all");
+  const [sortBy, setSortBy] = useState<"updated" | "title" | "dept">("updated");
+  const [filterDept, setFilterDept] = useState<string | null>(null);
 
-  const filteredTasks = tasks.filter((t) => {
-    if (showFilter === "bottleneck") return t.isBottleneck;
-    if (showFilter === "ai") return !!t.recommendation;
-    return true;
-  });
-
-  const personTasks = highlightPerson
-    ? tasks.filter((t) => t.contributors.includes(highlightPerson)).length
-    : null;
-
-  const selectedPerson = highlightPerson
-    ? contributors.find((c) => c.id === highlightPerson)
-    : null;
+  let sorted = [...tasks];
+  if (sortBy === "updated") sorted.sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
+  if (sortBy === "title") sorted.sort((a, b) => a.title.localeCompare(b.title));
+  if (sortBy === "dept") sorted.sort((a, b) => a.department.localeCompare(b.department));
+  if (filterDept) sorted = sorted.filter((t) => t.department === filterDept);
 
   return (
     <AppShell>
-      <div className="flex-1 flex min-h-0">
-        {/* Main area */}
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* Header */}
-          <div className="shrink-0 px-6 py-4 border-b border-border">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <h1 className="text-[18px] font-semibold tracking-tight">Intelligence Layer</h1>
-                <p className="text-[12px] text-muted">{tasks.length} tasks · {contributors.length} contributors · {deptNames.length} departments</p>
-              </div>
-              <div className="flex items-center gap-2">
-                {/* Filter pills */}
-                {(["all", "bottleneck", "ai"] as const).map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setShowFilter(f)}
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${
-                      showFilter === f ? "bg-foreground text-background" : "bg-surface text-muted border border-border"
-                    }`}
-                  >
-                    {f === "all" ? "All tasks" : f === "bottleneck" ? "Bottlenecks" : "AI opportunities"}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Person filter */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-muted-light mr-1">People:</span>
-              <button
-                onClick={() => setHighlightPerson(null)}
-                className={`px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors ${!highlightPerson ? "bg-foreground text-background" : "bg-surface text-muted border border-border"}`}
-              >
-                All
-              </button>
-              {contributors.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => setHighlightPerson(highlightPerson === c.id ? null : c.id)}
-                  className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors ${
-                    highlightPerson === c.id ? "bg-accent text-white" : "bg-surface text-muted border border-border hover:border-accent/30"
-                  }`}
-                >
-                  <span className={`w-3 h-3 rounded-full flex items-center justify-center text-[7px] font-bold ${highlightPerson === c.id ? "bg-white/30" : "bg-accent/10 text-accent"}`}>
-                    {c.name.charAt(0)}
-                  </span>
-                  {c.name.split(" ")[0]}
-                </button>
-              ))}
-            </div>
-
-            {/* Person summary */}
-            {selectedPerson && (
-              <div className="mt-2 p-2.5 rounded-lg bg-accent/5 border border-accent/10 flex items-center gap-3">
-                <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center text-[11px] font-bold text-accent">
-                  {selectedPerson.name.charAt(0)}{selectedPerson.name.split(" ")[1]?.charAt(0)}
-                </div>
-                <div>
-                  <p className="text-[12px] font-medium">{selectedPerson.name} <span className="text-muted font-normal">· {selectedPerson.role} · {selectedPerson.department}</span></p>
-                  <p className="text-[10px] text-muted-light">{personTasks} tasks · AI comfort: {selectedPerson.aiComfort}</p>
-                </div>
-              </div>
-            )}
+      <div className="flex-1 flex flex-col min-h-0">
+        {/* Header */}
+        <div className="shrink-0 px-6 py-4 border-b border-border flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.348 14.651a3.75 3.75 0 010-5.303m5.304 0a3.75 3.75 0 010 5.303" /></svg>
+            <h1 className="text-[15px] font-semibold">Company Intelligence</h1>
           </div>
-
-          {/* Map */}
-          <div className="flex-1 overflow-y-auto scroll-thin p-4">
-            <SwimLaneMap
-              tasks={filteredTasks}
-              contributors={contributors}
-              departments={deptNames}
-              onSelectTask={(task) => setSelectedTask(task)}
-              selectedTaskId={selectedTask?.id}
-              highlightPerson={highlightPerson || undefined}
-            />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSortBy(sortBy === "updated" ? "title" : sortBy === "title" ? "dept" : "updated")}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-muted border border-border hover:border-muted-light transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" /></svg>
+              Sorted by <span className="text-foreground">{sortBy === "updated" ? "Last updated" : sortBy === "title" ? "Name" : "Department"}</span>
+            </button>
+            {filterDept && (
+              <button onClick={() => setFilterDept(null)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-accent bg-accent/5 border border-accent/20">
+                {filterDept}
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            )}
+            <button className="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-foreground hover:bg-surface transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+            </button>
           </div>
         </div>
 
-        {/* Task detail panel */}
-        {selectedTask && (
-          <TaskPanel
-            task={selectedTask}
-            contributors={contributors}
-            onClose={() => setSelectedTask(null)}
-          />
-        )}
+        {/* Table */}
+        <div className="flex-1 overflow-y-auto scroll-thin">
+          {/* Table header */}
+          <div className="sticky top-0 z-10 bg-surface/80 backdrop-blur-sm border-b border-border px-6 py-2 grid grid-cols-[1fr_200px_160px_120px] gap-4 text-[11px] font-medium text-muted-light uppercase tracking-wider">
+            <span>Workflow</span>
+            <span className="flex items-center gap-1">
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" /></svg>
+              Contributors
+            </span>
+            <span className="flex items-center gap-1">
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75" /></svg>
+              Departments
+            </span>
+            <span>Last updated</span>
+          </div>
+
+          {/* Rows */}
+          <div>
+            {sorted.map((task) => {
+              const taskContribs = contributors.filter((c) => task.contributors.includes(c.id));
+              const deptColor = DEPT_COLORS[task.department] || "#9ca3af";
+              return (
+                <Link
+                  key={task.id}
+                  href={`/intelligence/${task.id}`}
+                  className="grid grid-cols-[1fr_200px_160px_120px] gap-4 px-6 py-3.5 border-b border-border hover:bg-surface/50 transition-colors items-center"
+                >
+                  <span className="text-[13px] font-medium text-foreground">{task.title}</span>
+
+                  <div className="flex items-center gap-1.5">
+                    {taskContribs.slice(0, 2).map((c) => (
+                      <span key={c.id} className="flex items-center gap-1 text-[12px] text-muted">
+                        <svg className="w-3 h-3 text-muted-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" /></svg>
+                        {c.name.split(" ")[0]} {c.name.split(" ")[1]?.[0]}.
+                      </span>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setFilterDept(task.department); }}
+                    className="flex items-center gap-1.5 text-[12px] text-muted hover:text-foreground transition-colors"
+                  >
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: deptColor }} />
+                    {task.department}
+                  </button>
+
+                  <span className="text-[12px] text-muted-light">{timeAgo(task.lastUpdated)}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* AI Assistant FAB */}
+        <Link href="/assess" className="fixed bottom-6 right-6 flex items-center gap-2 px-4 py-2.5 rounded-full bg-accent text-white text-[13px] font-medium shadow-lg hover:bg-accent-hover transition-colors z-20">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>
+          Ask Vishtan
+        </Link>
       </div>
     </AppShell>
   );
