@@ -3,12 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
+import OrgGraph from "@/components/OrgGraph";
 import { tasks, getDepartments, contributors } from "@/lib/mock-data";
 
 export default function IntelligencePage() {
   const departments = getDepartments();
   const [filterDept, setFilterDept] = useState<string>("all");
   const [filterType, setFilterType] = useState<"all" | "bottleneck" | "has-rec">("all");
+  const [view, setView] = useState<"graph" | "list">("graph");
 
   const filtered = tasks.filter((t) => {
     if (filterDept !== "all" && t.department !== filterDept) return false;
@@ -57,10 +59,28 @@ export default function IntelligencePage() {
             </div>
           </div>
 
-          <p className="text-[12px] text-muted-light mb-4">{filtered.length} task{filtered.length !== 1 ? "s" : ""}</p>
+          {/* View toggle */}
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[12px] text-muted-light">{filtered.length} task{filtered.length !== 1 ? "s" : ""}</p>
+            <div className="flex gap-1 bg-surface border border-border rounded-lg p-0.5">
+              <button onClick={() => setView("graph")} className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${view === "graph" ? "bg-background text-foreground shadow-sm" : "text-muted"}`}>
+                Graph
+              </button>
+              <button onClick={() => setView("list")} className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${view === "list" ? "bg-background text-foreground shadow-sm" : "text-muted"}`}>
+                List
+              </button>
+            </div>
+          </div>
+
+          {/* Graph view */}
+          {view === "graph" && (
+            <div className="mb-8">
+              <OrgGraph tasks={filtered} departments={departments.map((d) => d.name)} />
+            </div>
+          )}
 
           {/* Task list */}
-          <div className="space-y-2">
+          {view === "list" && <div className="space-y-2">
             {filtered.map((task) => {
               const taskContributors = contributors.filter((c) => task.contributors.includes(c.id));
               return (
@@ -125,7 +145,7 @@ export default function IntelligencePage() {
                 </Link>
               );
             })}
-          </div>
+          </div>}
         </div>
       </div>
     </AppShell>
