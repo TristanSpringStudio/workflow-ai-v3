@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
+import FlowCanvas from "@/components/FlowCanvas";
 import { mockIntelligence } from "@/lib/mock-data";
+import { buildOrgFlowMap } from "@/lib/flow-helpers";
 
 export default function DepartmentsPage() {
   const data = mockIntelligence;
+  const deptNames = data.departments.map((d) => d.name);
+  const { nodes: flowNodes, edges: flowEdges } = buildOrgFlowMap(deptNames, data.informationFlows);
 
   return (
     <AppShell>
@@ -50,8 +54,13 @@ export default function DepartmentsPage() {
             ))}
           </div>
 
-          {/* Information Flow Map */}
+          {/* Information Flow Canvas */}
           <h2 className="text-[16px] font-semibold mb-4">Information Flow Map</h2>
+          <div className="mb-8">
+            <FlowCanvas nodes={flowNodes} edges={flowEdges} height={450} />
+          </div>
+
+          <h2 className="text-[16px] font-semibold mb-4">Flow Details</h2>
           <div className="space-y-2">
             {data.informationFlows.map((flow, i) => (
               <div key={i} className={`p-4 rounded-xl border ${flow.bottleneck ? "border-red-200 bg-red-50/30" : "border-border"}`}>

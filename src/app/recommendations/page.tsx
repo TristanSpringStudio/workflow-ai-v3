@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import AppShell from "@/components/AppShell";
+import FlowCanvas from "@/components/FlowCanvas";
 import { mockIntelligence } from "@/lib/mock-data";
+import { buildWorkflowFlow } from "@/lib/flow-helpers";
 import type { WorkflowRecommendation } from "@/lib/types";
 
 export default function RecommendationsPage() {
@@ -72,6 +74,13 @@ export default function RecommendationsPage() {
                 {expanded === rec.id && (
                   <div className="px-5 pb-5 border-t border-border pt-4 space-y-4">
                     <p className="text-[13px] text-muted leading-relaxed">{rec.description}</p>
+
+                    {/* Workflow Canvas */}
+                    {(() => {
+                      const { nodes, edges } = buildWorkflowFlow(rec);
+                      const canvasHeight = Math.max(500, nodes.length * 100 + 100);
+                      return <FlowCanvas nodes={nodes} edges={edges} height={canvasHeight} />;
+                    })()}
 
                     {/* Trigger + Output */}
                     <div className="grid grid-cols-2 gap-3">
