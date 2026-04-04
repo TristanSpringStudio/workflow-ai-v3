@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import AppShell from "@/components/AppShell";
-import { mockIntelligence } from "@/lib/mock-data";
+import { contributors } from "@/lib/mock-data";
 
 interface ChatMsg {
   id: string;
@@ -58,7 +58,7 @@ export default function AssessPage() {
         <div className="shrink-0 h-14 border-b border-border px-6 flex items-center justify-between">
           <div>
             <h1 className="text-[14px] font-semibold">Employee Assessment</h1>
-            <p className="text-[11px] text-muted-light">{mockIntelligence.interviews.length} interviews completed · Question {Math.min(qIndex + 1, QUESTIONS.length)} of {QUESTIONS.length}</p>
+            <p className="text-[11px] text-muted-light">{contributors.length} interviews completed · Question {Math.min(qIndex + 1, QUESTIONS.length)} of {QUESTIONS.length}</p>
           </div>
           {/* Progress */}
           <div className="w-40 h-1.5 bg-border rounded-full overflow-hidden">

@@ -1,10 +1,10 @@
 "use client";
 
 import AppShell from "@/components/AppShell";
-import { mockIntelligence } from "@/lib/mock-data";
+import { company, contributors, getDepartments } from "@/lib/mock-data";
 
 export default function SettingsPage() {
-  const data = mockIntelligence;
+  const departments = getDepartments();
   return (
     <AppShell>
       <div className="flex-1 overflow-y-auto scroll-thin">
@@ -17,21 +17,21 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between p-4 rounded-xl border border-border">
                 <div>
                   <p className="text-[13px] font-medium">Company name</p>
-                  <p className="text-[12px] text-muted">{data.company.name}</p>
+                  <p className="text-[12px] text-muted">{company.name}</p>
                 </div>
                 <button className="text-[12px] text-accent hover:text-accent-hover">Edit</button>
               </div>
               <div className="flex items-center justify-between p-4 rounded-xl border border-border">
                 <div>
                   <p className="text-[13px] font-medium">Industry</p>
-                  <p className="text-[12px] text-muted">{data.company.industry}</p>
+                  <p className="text-[12px] text-muted">{company.industry}</p>
                 </div>
                 <button className="text-[12px] text-accent hover:text-accent-hover">Edit</button>
               </div>
               <div className="flex items-center justify-between p-4 rounded-xl border border-border">
                 <div>
                   <p className="text-[13px] font-medium">Company size</p>
-                  <p className="text-[12px] text-muted">{data.company.size} employees</p>
+                  <p className="text-[12px] text-muted">{company.size} employees</p>
                 </div>
                 <button className="text-[12px] text-accent hover:text-accent-hover">Edit</button>
               </div>
@@ -42,8 +42,8 @@ export default function SettingsPage() {
             <h2 className="text-[13px] font-semibold text-muted-light uppercase tracking-wide mb-4">Assessment</h2>
             <div className="p-4 rounded-xl border border-border">
               <p className="text-[13px] font-medium mb-1">Interviews completed</p>
-              <p className="text-[12px] text-muted">{data.interviews.length} employees across {data.departments.length} departments</p>
-              <p className="text-[12px] text-muted-light mt-2">Last interview: {new Date(data.interviews[data.interviews.length - 1].completedAt).toLocaleDateString()}</p>
+              <p className="text-[12px] text-muted">{contributors.length} employees across {departments.length} departments</p>
+              <p className="text-[12px] text-muted-light mt-2">Last interview: {new Date(contributors[contributors.length - 1].interviewedAt || "").toLocaleDateString()}</p>
             </div>
           </section>
 
