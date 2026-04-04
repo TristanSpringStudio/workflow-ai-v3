@@ -1,152 +1,121 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import AppShell from "@/components/AppShell";
-import OrgGraph from "@/components/OrgGraph";
+import SwimLaneMap from "@/components/SwimLaneMap";
+import TaskPanel from "@/components/TaskPanel";
 import { tasks, getDepartments, contributors } from "@/lib/mock-data";
+import type { Task } from "@/lib/types";
 
 export default function IntelligencePage() {
   const departments = getDepartments();
-  const [filterDept, setFilterDept] = useState<string>("all");
-  const [filterType, setFilterType] = useState<"all" | "bottleneck" | "has-rec">("all");
-  const [view, setView] = useState<"graph" | "list">("graph");
+  const deptNames = departments.map((d) => d.name);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [highlightPerson, setHighlightPerson] = useState<string | null>(null);
+  const [showFilter, setShowFilter] = useState<"all" | "bottleneck" | "ai">("all");
 
-  const filtered = tasks.filter((t) => {
-    if (filterDept !== "all" && t.department !== filterDept) return false;
-    if (filterType === "bottleneck" && !t.isBottleneck) return false;
-    if (filterType === "has-rec" && !t.recommendation) return false;
+  const filteredTasks = tasks.filter((t) => {
+    if (showFilter === "bottleneck") return t.isBottleneck;
+    if (showFilter === "ai") return !!t.recommendation;
     return true;
   });
 
+  const personTasks = highlightPerson
+    ? tasks.filter((t) => t.contributors.includes(highlightPerson)).length
+    : null;
+
+  const selectedPerson = highlightPerson
+    ? contributors.find((c) => c.id === highlightPerson)
+    : null;
+
   return (
     <AppShell>
-      <div className="flex-1 overflow-y-auto scroll-thin">
-        <div className="max-w-5xl mx-auto px-8 py-8">
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">Intelligence Layer</h1>
-              <p className="mt-1 text-[14px] text-muted">
-                {tasks.length} tasks mapped across {departments.length} departments · {contributors.length} contributors
-              </p>
+      <div className="flex-1 flex min-h-0">
+        {/* Main area */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Header */}
+          <div className="shrink-0 px-6 py-4 border-b border-border">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h1 className="text-[18px] font-semibold tracking-tight">Intelligence Layer</h1>
+                <p className="text-[12px] text-muted">{tasks.length} tasks · {contributors.length} contributors · {deptNames.length} departments</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Filter pills */}
+                {(["all", "bottleneck", "ai"] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setShowFilter(f)}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${
+                      showFilter === f ? "bg-foreground text-background" : "bg-surface text-muted border border-border"
+                    }`}
+                  >
+                    {f === "all" ? "All tasks" : f === "bottleneck" ? "Bottlenecks" : "AI opportunities"}
+                  </button>
+                ))}
+              </div>
             </div>
-            <Link href="/assess" className="px-4 py-2 rounded-xl bg-accent text-white text-[13px] font-medium hover:bg-accent-hover transition-colors">
-              + Add context
-            </Link>
-          </div>
 
-          {/* Filters */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex gap-1">
-              <button onClick={() => setFilterDept("all")} className={`px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors ${filterDept === "all" ? "bg-foreground text-background" : "bg-surface text-muted border border-border hover:text-foreground"}`}>
-                All depts
+            {/* Person filter */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-muted-light mr-1">People:</span>
+              <button
+                onClick={() => setHighlightPerson(null)}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors ${!highlightPerson ? "bg-foreground text-background" : "bg-surface text-muted border border-border"}`}
+              >
+                All
               </button>
-              {departments.map((d) => (
-                <button key={d.name} onClick={() => setFilterDept(d.name)} className={`px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors ${filterDept === d.name ? "bg-foreground text-background" : "bg-surface text-muted border border-border hover:text-foreground"}`}>
-                  {d.name}
-                </button>
-              ))}
-            </div>
-
-            <div className="w-px h-5 bg-border" />
-
-            <div className="flex gap-1">
-              {([["all", "All"], ["bottleneck", "Bottlenecks"], ["has-rec", "Has recommendation"]] as const).map(([value, label]) => (
-                <button key={value} onClick={() => setFilterType(value)} className={`px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors ${filterType === value ? "bg-foreground text-background" : "bg-surface text-muted border border-border hover:text-foreground"}`}>
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* View toggle */}
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-[12px] text-muted-light">{filtered.length} task{filtered.length !== 1 ? "s" : ""}</p>
-            <div className="flex gap-1 bg-surface border border-border rounded-lg p-0.5">
-              <button onClick={() => setView("graph")} className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${view === "graph" ? "bg-background text-foreground shadow-sm" : "text-muted"}`}>
-                Graph
-              </button>
-              <button onClick={() => setView("list")} className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${view === "list" ? "bg-background text-foreground shadow-sm" : "text-muted"}`}>
-                List
-              </button>
-            </div>
-          </div>
-
-          {/* Graph view */}
-          {view === "graph" && (
-            <div className="mb-8">
-              <OrgGraph tasks={filtered} departments={departments.map((d) => d.name)} />
-            </div>
-          )}
-
-          {/* Task list */}
-          {view === "list" && <div className="space-y-2">
-            {filtered.map((task) => {
-              const taskContributors = contributors.filter((c) => task.contributors.includes(c.id));
-              return (
-                <Link
-                  key={task.id}
-                  href={`/intelligence/${task.id}`}
-                  className="group block p-5 rounded-2xl border border-border hover:border-muted-light transition-colors"
+              {contributors.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setHighlightPerson(highlightPerson === c.id ? null : c.id)}
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors ${
+                    highlightPerson === c.id ? "bg-accent text-white" : "bg-surface text-muted border border-border hover:border-accent/30"
+                  }`}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-surface text-muted border border-border">{task.department}</span>
-                        <span className="text-[11px] text-muted-light">{task.frequency}</span>
-                        <span className="text-[11px] text-muted-light">· {task.timeSpent}</span>
-                        {task.isBottleneck && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-50 text-red-700 border border-red-200">Bottleneck</span>
-                        )}
-                        {task.recommendation && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-accent/10 text-accent border border-accent/20">
-                            AI opportunity
-                          </span>
-                        )}
-                      </div>
-                      <h2 className="text-[15px] font-semibold group-hover:text-accent transition-colors">{task.title}</h2>
-                      <p className="mt-0.5 text-[12px] text-muted leading-relaxed">{task.description}</p>
+                  <span className={`w-3 h-3 rounded-full flex items-center justify-center text-[7px] font-bold ${highlightPerson === c.id ? "bg-white/30" : "bg-accent/10 text-accent"}`}>
+                    {c.name.charAt(0)}
+                  </span>
+                  {c.name.split(" ")[0]}
+                </button>
+              ))}
+            </div>
 
-                      {/* Flow summary */}
-                      <div className="mt-3 flex items-center gap-2 text-[11px] text-muted-light">
-                        <span>{task.inputs.length} input{task.inputs.length !== 1 ? "s" : ""}</span>
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                        <span>{task.steps.length} steps</span>
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                        <span>{task.outputs.length} output{task.outputs.length !== 1 ? "s" : ""}</span>
-                      </div>
+            {/* Person summary */}
+            {selectedPerson && (
+              <div className="mt-2 p-2.5 rounded-lg bg-accent/5 border border-accent/10 flex items-center gap-3">
+                <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center text-[11px] font-bold text-accent">
+                  {selectedPerson.name.charAt(0)}{selectedPerson.name.split(" ")[1]?.charAt(0)}
+                </div>
+                <div>
+                  <p className="text-[12px] font-medium">{selectedPerson.name} <span className="text-muted font-normal">· {selectedPerson.role} · {selectedPerson.department}</span></p>
+                  <p className="text-[10px] text-muted-light">{personTasks} tasks · AI comfort: {selectedPerson.aiComfort}</p>
+                </div>
+              </div>
+            )}
+          </div>
 
-                      {/* Tools + contributors */}
-                      <div className="mt-2 flex items-center gap-3">
-                        <div className="flex gap-1">
-                          {task.tools.slice(0, 4).map((tool) => (
-                            <span key={tool} className="px-2 py-0.5 rounded-md text-[10px] bg-surface border border-border text-muted">{tool}</span>
-                          ))}
-                          {task.tools.length > 4 && <span className="text-[10px] text-muted-light">+{task.tools.length - 4}</span>}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {taskContributors.map((c) => (
-                            <div key={c.id} className="w-5 h-5 rounded-full bg-accent/10 flex items-center justify-center text-[9px] font-bold text-accent" title={c.name}>
-                              {c.name.charAt(0)}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Impact preview if recommendation exists */}
-                    {task.recommendation && (
-                      <div className="shrink-0 text-right">
-                        <p className="text-[14px] font-bold text-green-600">{task.recommendation.impact.timeSaved}</p>
-                        <p className="text-[10px] text-muted-light">saved</p>
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>}
+          {/* Map */}
+          <div className="flex-1 overflow-y-auto scroll-thin p-4">
+            <SwimLaneMap
+              tasks={filteredTasks}
+              contributors={contributors}
+              departments={deptNames}
+              onSelectTask={(task) => setSelectedTask(task)}
+              selectedTaskId={selectedTask?.id}
+              highlightPerson={highlightPerson || undefined}
+            />
+          </div>
         </div>
+
+        {/* Task detail panel */}
+        {selectedTask && (
+          <TaskPanel
+            task={selectedTask}
+            contributors={contributors}
+            onClose={() => setSelectedTask(null)}
+          />
+        )}
       </div>
     </AppShell>
   );
