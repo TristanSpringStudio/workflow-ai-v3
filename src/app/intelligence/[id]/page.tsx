@@ -202,8 +202,7 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
                 </div>
 
                 {/* AI toggle — floating bottom */}
-                <div className="shrink-0 px-6 py-4 flex justify-center relative">
-                  <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-[#fafbfc] to-transparent pointer-events-none" />
+                <div className="shrink-0 px-6 py-4 flex justify-center">
                   <button
                     onClick={() => { setAiRecsOn(!aiRecsOn); setSelectedStep(null); }}
                     className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-[13px] font-medium border shadow-md transition-colors ${
