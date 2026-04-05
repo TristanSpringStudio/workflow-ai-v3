@@ -142,14 +142,15 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
           {/* ─── Map Tab ─── */}
           {tab === "map" && (
             <>
-              <div className="flex-1 overflow-y-auto scroll-thin">
-                <div className="min-h-full bg-[#fafbfc] relative">
-                  {/* Dot grid */}
-                  <div className="absolute inset-0" style={{ backgroundImage: "radial-gradient(circle, #d1d5db 0.7px, transparent 0.7px)", backgroundSize: "20px 20px" }} />
+              <div className="flex-1 flex flex-col min-h-0">
+                <div className="flex-1 overflow-y-auto scroll-thin">
+                  <div className="min-h-full bg-[#fafbfc] relative">
+                    {/* Dot grid */}
+                    <div className="absolute inset-0" style={{ backgroundImage: "radial-gradient(circle, #d1d5db 0.7px, transparent 0.7px)", backgroundSize: "20px 20px" }} />
 
-                  {/* Flow nodes */}
-                  <div className="relative z-10 flex flex-col items-center py-10 px-6 gap-0">
-                    {displaySteps.map((step, i) => {
+                    {/* Flow nodes */}
+                    <div className="relative z-10 flex flex-col items-center py-10 px-6 gap-0">
+                      {displaySteps.map((step, i) => {
                       const isAi = step.actor === "ai";
                       const isSelected = selectedStep?.order === step.order;
                       const logo = step.toolIcon ? getLogo(step.toolIcon) : (step.tool ? getLogo(step.tool) : "");
@@ -195,25 +196,27 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
                       );
                     })}
 
-                    {/* AI toggle */}
-                    <div className="mt-8">
-                      <button
-                        onClick={() => { setAiRecsOn(!aiRecsOn); setSelectedStep(null); }}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium border transition-colors ${
-                          aiRecsOn
-                            ? "bg-pink-50 border-pink-300 text-pink-700"
-                            : "bg-white border-border text-muted hover:border-muted-light"
-                        }`}
-                      >
-                        {aiRecsOn ? (
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                        ) : (
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25" /></svg>
-                        )}
-                        AI Recommendations {aiRecsOn ? "On" : "Off"}
-                      </button>
                     </div>
                   </div>
+                </div>
+
+                {/* AI toggle — sticky bottom */}
+                <div className="shrink-0 border-t border-border bg-background px-6 py-3 flex justify-center">
+                  <button
+                    onClick={() => { setAiRecsOn(!aiRecsOn); setSelectedStep(null); }}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-[13px] font-medium border transition-colors ${
+                      aiRecsOn
+                        ? "bg-pink-50 border-pink-300 text-pink-700"
+                        : "bg-white border-border text-muted hover:border-muted-light"
+                    }`}
+                  >
+                    {aiRecsOn ? (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25" /></svg>
+                    )}
+                    AI Recommendations {aiRecsOn ? "On" : "Off"}
+                  </button>
                 </div>
               </div>
 
