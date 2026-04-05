@@ -3,7 +3,7 @@ import type { Company, Contributor, Task, Department, RoadmapPhase } from "./typ
 // ─── Company ───
 export const company: Company = {
   id: "company-1",
-  name: "Acme Technologies",
+  name: "Zippy Zaps",
   industry: "B2B SaaS",
   size: "51-200",
   createdAt: "2026-03-14T00:00:00Z",
