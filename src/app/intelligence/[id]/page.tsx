@@ -23,7 +23,7 @@ function getLogo(tool: string) {
   return domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : "";
 }
 
-type Tab = "details" | "map" | "knowledge" | "dependencies" | "assessment";
+type Tab = "details" | "map" | "knowledge" | "dependencies" | "assessment" | "implementation";
 
 export default function WorkflowInteriorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -44,6 +44,7 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
     { key: "knowledge", label: "Knowledge" },
     { key: "dependencies", label: "Dependencies" },
     { key: "assessment", label: "Our Assessment" },
+    ...(rec?.implementation ? [{ key: "implementation" as Tab, label: "Implementation" }] : []),
   ];
 
   return (
@@ -476,6 +477,87 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
                     <p className="text-[12px] text-muted-light mt-1">More interview data may help generate recommendations.</p>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* ─── Implementation Tab ─── */}
+          {tab === "implementation" && rec?.implementation && (
+            <div className="flex-1 overflow-y-auto scroll-thin px-6 py-6">
+              <div className="max-w-3xl">
+                <h2 className="text-[16px] font-semibold mb-2">Implementation Guide</h2>
+                <p className="text-[13px] text-muted mb-6">{rec.summary}</p>
+
+                <div className="flex gap-4 mb-8 text-[12px]">
+                  <span className="text-green-600 font-semibold">{rec.impact.timeSaved} saved</span>
+                  <span className="text-green-600 font-semibold">{rec.impact.costSaved}/yr</span>
+                  <span className="text-muted capitalize">{rec.difficulty} difficulty</span>
+                  <span className="text-muted">{rec.implementation.estimatedTime}</span>
+                </div>
+
+                {/* Prerequisites */}
+                <div className="mb-6">
+                  <h3 className="text-[12px] font-semibold text-muted-light uppercase tracking-widest mb-3">Prerequisites</h3>
+                  <ul className="space-y-2">
+                    {rec.implementation.prerequisites.map((p, i) => (
+                      <li key={i} className="flex gap-2.5 text-[13px] text-muted">
+                        <span className="w-5 h-5 rounded-full border border-border flex items-center justify-center shrink-0 text-[10px] text-muted-light">{i + 1}</span>
+                        {p}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Steps */}
+                <div className="mb-6">
+                  <h3 className="text-[12px] font-semibold text-muted-light uppercase tracking-widest mb-3">Step-by-step guide</h3>
+                  <div className="space-y-3">
+                    {rec.implementation.steps.map((step, i) => {
+                      const owner = step.owner ? contributors.find((c) => c.id === step.owner) : null;
+                      return (
+                        <div key={i} className="p-4 rounded-xl bg-surface border border-border">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <div className="flex items-center gap-2.5">
+                              <span className="w-6 h-6 rounded-lg bg-accent/10 text-accent flex items-center justify-center text-[11px] font-bold shrink-0">{i + 1}</span>
+                              <h4 className="text-[13px] font-semibold">{step.title}</h4>
+                            </div>
+                            {step.timeEstimate && (
+                              <span className="text-[11px] text-muted-light shrink-0">{step.timeEstimate}</span>
+                            )}
+                          </div>
+                          <p className="text-[12px] text-muted leading-relaxed ml-[34px]">{step.description}</p>
+                          {(owner || step.tools) && (
+                            <div className="mt-2 ml-[34px] flex items-center gap-4 text-[11px] text-muted-light">
+                              {owner && <span>Owner: <span className="text-foreground font-medium">{owner.name}</span> · {owner.role}</span>}
+                              {step.tools && <span>Tools: {step.tools.join(", ")}</span>}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Success criteria */}
+                <div className="mb-6">
+                  <h3 className="text-[12px] font-semibold text-muted-light uppercase tracking-widest mb-3">Success criteria</h3>
+                  <div className="p-4 rounded-xl bg-green-50/50 border border-green-200/50">
+                    <ul className="space-y-2">
+                      {rec.implementation.successCriteria.map((c, i) => (
+                        <li key={i} className="flex gap-2 text-[12px] text-green-900/80">
+                          <svg className="w-4 h-4 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                          {c}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Rollback */}
+                <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200/50">
+                  <h3 className="text-[11px] font-semibold text-amber-700 uppercase tracking-widest mb-2">Rollback plan</h3>
+                  <p className="text-[12px] text-amber-900/70 leading-relaxed">{rec.implementation.rollbackPlan}</p>
+                </div>
               </div>
             </div>
           )}

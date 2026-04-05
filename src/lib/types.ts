@@ -63,6 +63,23 @@ export interface TaskStep {
   aiReadyNote?: string;
 }
 
+// ─── Implementation Guide ───
+export interface ImplementationStep {
+  title: string;
+  description: string;
+  owner?: string; // contributor ID or role
+  timeEstimate?: string;
+  tools?: string[];
+}
+
+export interface ImplementationGuide {
+  prerequisites: string[];
+  steps: ImplementationStep[];
+  successCriteria: string[];
+  rollbackPlan: string;
+  estimatedTime: string;
+}
+
 // ─── Recommendation: the "after" for a task ───
 export interface TaskRecommendation {
   summary: string;
@@ -77,6 +94,7 @@ export interface TaskRecommendation {
   aiHandles: string[];
   humanDecides: string[];
   phase: 1 | 2 | 3;
+  implementation?: ImplementationGuide;
 }
 
 // ─── Knowledge citation ───

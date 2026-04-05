@@ -62,6 +62,30 @@ export const tasks: Task[] = [
       aiHandles: ["Data compilation from 3 sources", "WoW calculations", "Anomaly detection", "Formatting and distribution"],
       humanDecides: ["Strategic interpretation", "What to escalate", "Business context", "Final approval"],
       phase: 1,
+      implementation: {
+        prerequisites: [
+          "Access to Google Analytics API (Sarah has admin access)",
+          "HubSpot API key (check with IT for permissions)",
+          "Current report template in Google Docs as reference",
+          "Sarah available for 30 min to review first AI-generated draft",
+        ],
+        steps: [
+          { title: "Set up Claude Project with report context", description: "Create a new Claude Project. Upload the last 4 weekly reports as examples. Add instructions about the format, tone, and what leadership expects.", owner: "c1", timeEstimate: "20 min", tools: ["Claude"] },
+          { title: "Create the data input template", description: "Build a simple template that Sarah pastes her GA and HubSpot data into each Friday. Include column headers and any formatting AI needs to understand the data.", owner: "c1", timeEstimate: "15 min", tools: ["Google Sheets"] },
+          { title: "Test with last week's data", description: "Run last week's data through the AI prompt. Compare the output against the actual report Sarah sent. Note any gaps in formatting, insights, or tone.", owner: "c1", timeEstimate: "20 min", tools: ["Claude", "Google Docs"] },
+          { title: "Refine the prompt based on gaps", description: "Adjust the system prompt to fix any issues found in the test run. Add specific instructions for anomaly detection thresholds and insight formatting.", owner: "c1", timeEstimate: "15 min", tools: ["Claude"] },
+          { title: "Run live for one week alongside manual process", description: "This Friday, Sarah does the report both ways: manually (as backup) and with AI. Compare results, measure time savings, and get leadership feedback.", owner: "c1", timeEstimate: "30 min" },
+          { title: "Switch to AI-first workflow", description: "If the test week went well, switch to AI-generated draft as the primary method. Sarah reviews and adds context instead of building from scratch.", owner: "c1", timeEstimate: "Ongoing" },
+        ],
+        successCriteria: [
+          "Report generation time drops from 3 hours to under 30 minutes",
+          "Leadership cannot distinguish AI-drafted reports from manual ones",
+          "Anomalies and trends are surfaced that were previously missed",
+          "Sarah rates the process as 'significantly better' after 2 weeks",
+        ],
+        rollbackPlan: "Sarah can revert to manual process at any time since the template and data sources haven't changed. The AI setup is additive — nothing is removed or replaced until the team is confident.",
+        estimatedTime: "2 hours total setup + 1 week parallel testing",
+      },
     },
     knowledge: [
       { contributorId: "c1", quote: "Every Friday I spend about 3 hours pulling data from GA, HubSpot, and our spreadsheets to build the weekly report. The format never changes — it's the same template every time.", interviewDate: "2026-03-15" },
@@ -111,6 +135,27 @@ export const tasks: Task[] = [
       aiHandles: ["Prospect research", "Email drafting", "CRM logging", "Follow-up scheduling"],
       humanDecides: ["Relationship judgment", "Personalization authenticity", "Deal strategy", "Timing"],
       phase: 1,
+      implementation: {
+        prerequisites: [
+          "Access to Marcus's top 5 best-performing email templates",
+          "Salesforce API access for CRM logging",
+          "A list of 20 prospects to test with",
+        ],
+        steps: [
+          { title: "Collect winning email templates", description: "Gather Marcus's 5 best-performing outreach emails — the ones that got replies. These become the framework AI learns from.", owner: "c2", timeEstimate: "15 min", tools: ["Gmail"] },
+          { title: "Build the outreach prompt", description: "Create a Claude prompt that takes prospect context (name, role, company, recent news) and generates a personalized email using the winning frameworks.", owner: "c2", timeEstimate: "20 min", tools: ["Claude"] },
+          { title: "Test with 10 prospects", description: "Generate AI drafts for 10 real prospects. Marcus reviews each one, notes what's good and what needs adjusting. Refine the prompt.", owner: "c2", timeEstimate: "30 min", tools: ["Claude", "Gmail"] },
+          { title: "A/B test AI vs manual", description: "Send 10 AI-drafted emails and 10 manual emails. Compare reply rates after 1 week.", owner: "c2", timeEstimate: "1 week tracking" },
+          { title: "Roll out to full team", description: "If reply rates match or exceed manual, train the rest of the sales team on the workflow.", owner: "c2", timeEstimate: "30 min" },
+        ],
+        successCriteria: [
+          "Per-email time drops from 20 minutes to under 3 minutes",
+          "Reply rate stays equal to or exceeds current baseline",
+          "Marcus and team rate email quality as 'good enough to send with minor edits'",
+        ],
+        rollbackPlan: "Reps can always write manually. The AI workflow is an option, not a mandate. No systems are changed — it's purely an additional tool.",
+        estimatedTime: "1.5 hours setup + 1 week A/B test",
+      },
     },
     knowledge: [
       { contributorId: "c2", quote: "I spend about 20 minutes per email if I really personalize it. That's 6 emails a day max. My team does the same thing — we're all reinventing the wheel on every email.", interviewDate: "2026-03-16" },
@@ -161,6 +206,30 @@ export const tasks: Task[] = [
       aiHandles: ["Data extraction from CRM", "Checklist and ticket generation", "Timeline estimation", "Notifications"],
       humanDecides: ["Custom requirements", "Resource allocation", "Client relationship", "Escalation handling"],
       phase: 2,
+      implementation: {
+        prerequisites: [
+          "Salesforce deal fields mapped (which fields contain client requirements)",
+          "Standard onboarding checklist template in Notion",
+          "Jira project template for client setup",
+          "Priya and Marcus aligned on what 'deal info' the handoff needs",
+        ],
+        steps: [
+          { title: "Map Salesforce deal fields", description: "Document which Salesforce fields contain the data Ops needs: contract terms, client contact, technical requirements, timeline expectations.", owner: "c2", timeEstimate: "30 min", tools: ["Salesforce"] },
+          { title: "Create onboarding template in Notion", description: "Build a standard onboarding template that can be auto-populated from deal data. Include checklist items, team assignments, and milestone dates.", owner: "c3", timeEstimate: "45 min", tools: ["Notion"] },
+          { title: "Build the automation trigger", description: "Set up a workflow that triggers when a deal is marked 'Closed Won' in Salesforce. It should extract deal data and create the Notion checklist automatically.", owner: "c3", timeEstimate: "1 hour", tools: ["Salesforce", "Notion"] },
+          { title: "Add Jira ticket generation", description: "Extend the automation to create Jira setup tickets from the checklist items, pre-filled with client requirements and assigned to the right engineers.", owner: "c4", timeEstimate: "45 min", tools: ["Jira"] },
+          { title: "Test with next 2 deals", description: "Run the automation on the next 2 closed deals alongside the manual process. Compare completeness and time.", owner: "c3", timeEstimate: "2 weeks" },
+          { title: "Go live and deprecate manual handoff", description: "Once validated, stop the email-based handoff. All deal-to-onboarding flow goes through the automated pipeline.", owner: "c3", timeEstimate: "Ongoing" },
+        ],
+        successCriteria: [
+          "Onboarding kickoff happens within 48 hours of deal close (down from 2 weeks)",
+          "Zero missed checklist items compared to manual process",
+          "Engineering setup tickets contain all required information on first pass",
+          "Sales and Ops teams report the handoff as 'seamless'",
+        ],
+        rollbackPlan: "The Salesforce fields and Notion template remain regardless of automation. If the trigger fails, Priya can manually create the checklist from the same template. Jira tickets can be created manually as fallback.",
+        estimatedTime: "3 hours setup + 2 weeks parallel testing",
+      },
     },
     knowledge: [
       { contributorId: "c3", quote: "When Sales closes a deal, I get an email with the contract attached. Then I have to manually create the checklist, the Jira tickets, schedule the kickoff — it takes 4 hours per client.", interviewDate: "2026-03-17" },

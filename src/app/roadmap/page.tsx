@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Zap, PiggyBank, Clock, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, ClipboardList } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
+import ImplementationTray from "@/components/ImplementationTray";
 import { tasks, roadmap, company } from "@/lib/mock-data";
+import type { Task } from "@/lib/types";
 
 const ACTION_LABELS: Record<string, { label: string; dept: string }> = {
   t1: { label: "Automate weekly performance reporting", dept: "Marketing" },
@@ -56,6 +59,8 @@ const PHASE_DATA: Record<number, { title: string; timeline: string; iconBg: stri
 };
 
 export default function RoadmapPage() {
+  const [trayTask, setTrayTask] = useState<{ task: Task; label: string } | null>(null);
+
   return (
     <AppShell>
       <PageHeader title="Implementation Plan" />
@@ -116,19 +121,20 @@ export default function RoadmapPage() {
                               const action = ACTION_LABELS[task.id];
                               const deptIcon = DEPT_ICONS[action?.dept || task.department];
                               const IconComponent = deptIcon?.Icon || Wrench;
+                              const label = action?.label || task.title;
                               return (
-                                <Link
+                                <button
                                   key={task.id}
-                                  href={`/intelligence/${task.id}`}
+                                  onClick={() => setTrayTask({ task, label })}
                                   className="group flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border hover:border-muted-light transition-colors"
                                 >
                                   <div className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: deptIcon?.bg || "#6b7280" }}>
                                     <IconComponent className="w-2.5 h-2.5 text-white" strokeWidth={2} />
                                   </div>
                                   <span className="text-[12px] group-hover:text-accent transition-colors">
-                                    {action?.label || task.title}
+                                    {label}
                                   </span>
-                                </Link>
+                                </button>
                               );
                             })}
                           </div>
@@ -165,6 +171,15 @@ export default function RoadmapPage() {
           </div>
         </div>
       </div>
+
+      {/* Implementation tray */}
+      {trayTask && (
+        <ImplementationTray
+          task={trayTask.task}
+          actionLabel={trayTask.label}
+          onClose={() => setTrayTask(null)}
+        />
+      )}
     </AppShell>
   );
 }
