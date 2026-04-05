@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Zap, PiggyBank, Clock, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch } from "lucide-react";
+import { Zap, PiggyBank, Clock, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, ClipboardList } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
 import { tasks, roadmap, company } from "@/lib/mock-data";
@@ -87,7 +87,7 @@ export default function RoadmapPage() {
                     <div key={phase.phase} className="relative pl-12">
                       {/* Timeline dot */}
                       <div className="absolute left-0 top-0 w-8 h-8 rounded-lg flex items-center justify-center z-10" style={{ background: data?.iconBg || "#6b7280" }}>
-                        <span className="text-[12px] font-bold text-white">{phase.phase}</span>
+                        <ClipboardList className="w-4 h-4 text-white" strokeWidth={2} />
                       </div>
 
                       {/* Phase header */}
