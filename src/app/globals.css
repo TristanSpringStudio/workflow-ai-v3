@@ -33,3 +33,20 @@ body {
 .scroll-thin::-webkit-scrollbar { width: 5px; }
 .scroll-thin::-webkit-scrollbar-track { background: transparent; }
 .scroll-thin::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* Gradient border for chat */
+.chat-border {
+  position: relative;
+}
+.chat-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, #93c5fd, #c4b5fd, #f9a8d4, #93c5fd);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+}
