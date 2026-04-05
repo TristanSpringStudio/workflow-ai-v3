@@ -33,10 +33,9 @@ export default function IntelligencePage() {
   const [sortBy, setSortBy] = useState<SortKey>("updated");
   const [sortOpen, setSortOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [filterDept, setFilterDept] = useState<string | null>(null);
-  const [filterContributor, setFilterContributor] = useState<string | null>(null);
-  const [filterBottleneck, setFilterBottleneck] = useState(false);
-  const [filterAiReady, setFilterAiReady] = useState(false);
+  const [filterDepts, setFilterDepts] = useState<Set<string>>(new Set());
+  const [filterContributors, setFilterContributors] = useState<Set<string>>(new Set());
+  const [filterStatuses, setFilterStatuses] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const sortRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
@@ -63,11 +62,11 @@ export default function IntelligencePage() {
     );
   }
 
-  // Filters
-  if (filterDept) sorted = sorted.filter((t) => t.department === filterDept);
-  if (filterContributor) sorted = sorted.filter((t) => t.contributors.includes(filterContributor));
-  if (filterBottleneck) sorted = sorted.filter((t) => t.isBottleneck);
-  if (filterAiReady) sorted = sorted.filter((t) => !!t.recommendation);
+  // Filters (multi-select)
+  if (filterDepts.size > 0) sorted = sorted.filter((t) => filterDepts.has(t.department));
+  if (filterContributors.size > 0) sorted = sorted.filter((t) => t.contributors.some((c) => filterContributors.has(c)));
+  if (filterStatuses.has("bottleneck")) sorted = sorted.filter((t) => t.isBottleneck);
+  if (filterStatuses.has("ai-ready")) sorted = sorted.filter((t) => !!t.recommendation);
 
   // Sort
   if (sortBy === "updated") sorted.sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
@@ -80,13 +79,19 @@ export default function IntelligencePage() {
     return aName.localeCompare(bName);
   });
 
-  const activeFilterCount = (filterDept ? 1 : 0) + (filterContributor ? 1 : 0) + (filterBottleneck ? 1 : 0) + (filterAiReady ? 1 : 0);
+  const activeFilterCount = filterDepts.size + filterContributors.size + filterStatuses.size;
+
+  const toggleSet = <T,>(set: Set<T>, val: T): Set<T> => {
+    const next = new Set(set);
+    if (next.has(val)) next.delete(val);
+    else next.add(val);
+    return next;
+  };
 
   const clearFilters = () => {
-    setFilterDept(null);
-    setFilterContributor(null);
-    setFilterBottleneck(false);
-    setFilterAiReady(false);
+    setFilterDepts(new Set());
+    setFilterContributors(new Set());
+    setFilterStatuses(new Set());
   };
 
   return (
@@ -142,8 +147,8 @@ export default function IntelligencePage() {
                       {departments.map((d) => (
                         <button
                           key={d.name}
-                          onClick={() => setFilterDept(filterDept === d.name ? null : d.name)}
-                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${filterDept === d.name ? "border-accent/30 bg-accent/10 text-accent" : "border-border text-muted hover:border-muted-light"}`}
+                          onClick={() => setFilterDepts(toggleSet(filterDepts, d.name))}
+                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${filterDepts.has(d.name) ? "border-accent/30 bg-accent/10 text-accent" : "border-border text-muted hover:border-muted-light"}`}
                         >
                           <span className="w-2 h-2 rounded-full" style={{ background: DEPT_COLORS[d.name] || "#9ca3af" }} />
                           {d.name}
@@ -159,8 +164,8 @@ export default function IntelligencePage() {
                       {contributors.map((c) => (
                         <button
                           key={c.id}
-                          onClick={() => setFilterContributor(filterContributor === c.id ? null : c.id)}
-                          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${filterContributor === c.id ? "border-accent/30 bg-accent/10 text-accent" : "border-border text-muted hover:border-muted-light"}`}
+                          onClick={() => setFilterContributors(toggleSet(filterContributors, c.id))}
+                          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${filterContributors.has(c.id) ? "border-accent/30 bg-accent/10 text-accent" : "border-border text-muted hover:border-muted-light"}`}
                         >
                           {c.name.split(" ")[0]}
                         </button>
@@ -173,14 +178,14 @@ export default function IntelligencePage() {
                     <p className="text-[11px] font-medium text-muted-light uppercase tracking-widest mb-2">Status</p>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => setFilterBottleneck(!filterBottleneck)}
-                        className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${filterBottleneck ? "border-red-300 bg-red-50 text-red-700" : "border-border text-muted hover:border-muted-light"}`}
+                        onClick={() => setFilterStatuses(toggleSet(filterStatuses, "bottleneck"))}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${filterStatuses.has("bottleneck") ? "border-red-300 bg-red-50 text-red-700" : "border-border text-muted hover:border-muted-light"}`}
                       >
                         Bottlenecks
                       </button>
                       <button
-                        onClick={() => setFilterAiReady(!filterAiReady)}
-                        className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${filterAiReady ? "border-accent/30 bg-accent/10 text-accent" : "border-border text-muted hover:border-muted-light"}`}
+                        onClick={() => setFilterStatuses(toggleSet(filterStatuses, "ai-ready"))}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${filterStatuses.has("ai-ready") ? "border-accent/30 bg-accent/10 text-accent" : "border-border text-muted hover:border-muted-light"}`}
                       >
                         AI opportunities
                       </button>
@@ -197,19 +202,22 @@ export default function IntelligencePage() {
             </div>
 
             {/* Active filter pills */}
-            {filterDept && (
-              <button onClick={() => setFilterDept(null)} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border border-accent/20 bg-accent/5 text-accent">
-                <span className="w-2 h-2 rounded-full" style={{ background: DEPT_COLORS[filterDept] || "#9ca3af" }} />
-                {filterDept}
+            {[...filterDepts].map((dept) => (
+              <button key={dept} onClick={() => setFilterDepts(toggleSet(filterDepts, dept))} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border border-accent/20 bg-accent/5 text-accent">
+                <span className="w-2 h-2 rounded-full" style={{ background: DEPT_COLORS[dept] || "#9ca3af" }} />
+                {dept}
                 <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
-            )}
-            {filterContributor && (
-              <button onClick={() => setFilterContributor(null)} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border border-accent/20 bg-accent/5 text-accent">
-                {contributors.find((c) => c.id === filterContributor)?.name.split(" ")[0]}
-                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            )}
+            ))}
+            {[...filterContributors].map((cId) => {
+              const c = contributors.find((x) => x.id === cId);
+              return c ? (
+                <button key={cId} onClick={() => setFilterContributors(toggleSet(filterContributors, cId))} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border border-accent/20 bg-accent/5 text-accent">
+                  {c.name.split(" ")[0]}
+                  <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              ) : null;
+            })}
           </div>
 
           {/* Search */}
