@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Play, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, Clock, BadgeDollarSign } from "lucide-react";
+import { Zap, PiggyBank, Clock, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
 import { tasks, roadmap, company } from "@/lib/mock-data";
 
-// Transformational action item names
 const ACTION_LABELS: Record<string, { label: string; dept: string }> = {
   t1: { label: "Automate weekly performance reporting", dept: "Marketing" },
   t2: { label: "AI-powered sales outreach at scale", dept: "Sales" },
@@ -29,33 +28,30 @@ const DEPT_ICONS: Record<string, { Icon: typeof DollarSign; bg: string }> = {
   Product: { Icon: PackageSearch, bg: "#ec4899" },
 };
 
-const PHASE_DATA: Record<number, { title: string; summary: string; metrics: { label: string; value: string }[] }> = {
+const PHASE_DATA: Record<number, { title: string; timeline: string; iconBg: string; summary: string; savings: string; implTime: string }> = {
   1: {
     title: "Build the foundation",
-    summary: `Based on our interviews across ${company.name}, we've identified high-impact workflows that can be improved immediately with minimal disruption. These quick wins are designed to build team confidence in AI-assisted processes while delivering measurable time savings from day one. Each phase builds on the previous one, moving from individual quick wins to cross-team optimization to full organizational transformation.`,
-    metrics: [
-      { label: "Savings", value: "$75,200/yr" },
-      { label: "Time saved", value: "26 hrs/wk" },
-      { label: "ROI", value: "4.2x" },
-    ],
+    timeline: "This week",
+    iconBg: "#2563eb",
+    summary: `Based on our interviews across ${company.name}, we've identified high-impact workflows that can be improved immediately with minimal disruption. Each phase builds on the previous one, moving from individual quick wins to cross-team optimization to full organizational transformation.`,
+    savings: "$75,200/yr",
+    implTime: "2 hours",
   },
   2: {
     title: "Cross-team optimization",
-    summary: `Phase 2 tackles the handoffs — the moments where work crosses department boundaries at ${company.name}. Our interviews revealed that the biggest time sinks aren't within departments, they're between them. Information gets re-entered, context gets lost, and people wait for manual routing that could flow automatically.`,
-    metrics: [
-      { label: "Savings", value: "$15,600/yr" },
-      { label: "Time saved", value: "3 hrs/client" },
-      { label: "Onboarding", value: "2wk → 3d" },
-    ],
+    timeline: "Next week",
+    iconBg: "#6366f1",
+    summary: `Phase 2 tackles the handoffs — the moments where work crosses department boundaries at ${company.name}. Our interviews revealed that the biggest time sinks aren't within departments, they're between them. Information gets re-entered, context gets lost, and people wait for manual routing.`,
+    savings: "$15,600/yr",
+    implTime: "4 hours",
   },
   3: {
     title: "Transformation",
+    timeline: "Next month",
+    iconBg: "#7c3aed",
     summary: `Building the intelligence infrastructure that makes ${company.name} a fundamentally different kind of organization. This is where individual workflow improvements compound into a system-wide advantage. Instead of batch reporting (monthly closes, weekly compilations), you move to continuous intelligence.`,
-    metrics: [
-      { label: "Savings", value: "$28,800/yr" },
-      { label: "Time saved", value: "20 hrs/mo" },
-      { label: "Close time", value: "5d → 1d" },
-    ],
+    savings: "$28,800/yr",
+    implTime: "8 hours",
   },
 };
 
@@ -76,77 +72,96 @@ export default function RoadmapPage() {
             </p>
           </div>
 
-          {/* Phases */}
-          <div className="space-y-8">
-            {roadmap.map((phase) => {
-              const phaseTasks = tasks.filter((t) => phase.taskIds.includes(t.id));
-              const data = PHASE_DATA[phase.phase];
+          {/* Timeline */}
+          <div className="rounded-2xl border border-border p-8">
+            <div className="relative">
+              {/* Vertical connecting line */}
+              <div className="absolute left-[15px] top-8 bottom-8 w-px bg-border" />
 
-              return (
-                <div key={phase.phase} className="rounded-2xl border border-border overflow-hidden">
-                  <div className="p-6">
-                    {/* Phase header */}
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-                        <Play className="w-3.5 h-3.5 text-white" fill="white" />
+              <div className="space-y-10">
+                {roadmap.map((phase, phaseIdx) => {
+                  const phaseTasks = tasks.filter((t) => phase.taskIds.includes(t.id));
+                  const data = PHASE_DATA[phase.phase];
+
+                  return (
+                    <div key={phase.phase} className="relative pl-12">
+                      {/* Timeline dot */}
+                      <div className="absolute left-0 top-0 w-8 h-8 rounded-lg flex items-center justify-center z-10" style={{ background: data?.iconBg || "#6b7280" }}>
+                        <span className="text-[12px] font-bold text-white">{phase.phase}</span>
                       </div>
-                      <h3 className="text-[16px] font-semibold">
-                        Step {phase.phase}: {data?.title || phase.name}
-                      </h3>
-                    </div>
 
-                    {/* Summary */}
-                    <p className="text-[13px] text-muted leading-relaxed mb-6">
-                      {data?.summary || phase.description}
-                    </p>
-
-                    <hr className="border-border mb-5" />
-
-                    {/* Action items */}
-                    <div className="mb-6">
-                      <h4 className="text-[13px] font-semibold mb-3">Action items</h4>
-                      <div className="space-y-2">
-                        {phaseTasks.map((task) => {
-                          const action = ACTION_LABELS[task.id];
-                          const deptIcon = DEPT_ICONS[action?.dept || task.department];
-                          const IconComponent = deptIcon?.Icon || Wrench;
-
-                          return (
-                            <Link
-                              key={task.id}
-                              href={`/intelligence/${task.id}`}
-                              className="group flex items-center gap-2.5 px-3 py-2 rounded-lg border border-border hover:border-muted-light transition-colors w-fit"
-                            >
-                              <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ background: deptIcon?.bg || "#6b7280" }}>
-                                <IconComponent className="w-3 h-3 text-white" strokeWidth={2} />
-                              </div>
-                              <span className="text-[13px] group-hover:text-accent transition-colors">
-                                {action?.label || task.title}
-                              </span>
-                            </Link>
-                          );
-                        })}
+                      {/* Phase header */}
+                      <div className="flex items-center gap-3 mb-3">
+                        <h3 className="text-[16px] font-semibold">{data?.title || phase.name}</h3>
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-surface border border-border text-muted">
+                          {data?.timeline || phase.duration}
+                        </span>
                       </div>
-                    </div>
 
-                    <hr className="border-border mb-5" />
+                      {/* Summary */}
+                      <p className="text-[13px] text-muted leading-relaxed mb-6">
+                        {data?.summary || phase.description}
+                      </p>
 
-                    {/* Projected Impact */}
-                    <div>
-                      <h4 className="text-[13px] font-semibold mb-3">Projected Impact</h4>
-                      <div className="grid grid-cols-3 gap-6">
-                        {(data?.metrics || []).map((metric, i) => (
-                          <div key={i}>
-                            <p className="text-[11px] text-muted-light">{metric.label}</p>
-                            <p className="text-[17px] font-bold mt-0.5">{metric.value}</p>
+                      {/* 2-column layout: labels left, values right */}
+                      <div className="space-y-4">
+                        {/* Action items */}
+                        <div className="flex gap-6">
+                          <div className="w-44 shrink-0 flex items-start gap-2 pt-1">
+                            <Zap className="w-3.5 h-3.5 text-muted-light shrink-0 mt-0.5" strokeWidth={1.5} />
+                            <span className="text-[13px] text-muted">Action items</span>
                           </div>
-                        ))}
+                          <div className="flex flex-wrap gap-1.5">
+                            {phaseTasks.map((task) => {
+                              const action = ACTION_LABELS[task.id];
+                              const deptIcon = DEPT_ICONS[action?.dept || task.department];
+                              const IconComponent = deptIcon?.Icon || Wrench;
+                              return (
+                                <Link
+                                  key={task.id}
+                                  href={`/intelligence/${task.id}`}
+                                  className="group flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border hover:border-muted-light transition-colors"
+                                >
+                                  <div className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: deptIcon?.bg || "#6b7280" }}>
+                                    <IconComponent className="w-2.5 h-2.5 text-white" strokeWidth={2} />
+                                  </div>
+                                  <span className="text-[12px] group-hover:text-accent transition-colors">
+                                    {action?.label || task.title}
+                                  </span>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Annual savings */}
+                        <div className="flex gap-6">
+                          <div className="w-44 shrink-0 flex items-center gap-2">
+                            <PiggyBank className="w-3.5 h-3.5 text-muted-light shrink-0" strokeWidth={1.5} />
+                            <span className="text-[13px] text-muted">Annual savings</span>
+                          </div>
+                          <span className="text-[14px] font-semibold">{data?.savings}</span>
+                        </div>
+
+                        {/* Implementation time */}
+                        <div className="flex gap-6">
+                          <div className="w-44 shrink-0 flex items-center gap-2">
+                            <Clock className="w-3.5 h-3.5 text-muted-light shrink-0" strokeWidth={1.5} />
+                            <span className="text-[13px] text-muted">Estimated implementation time</span>
+                          </div>
+                          <span className="text-[14px] font-semibold">{data?.implTime}</span>
+                        </div>
                       </div>
+
+                      {/* Divider between phases (not after last) */}
+                      {phaseIdx < roadmap.length - 1 && (
+                        <div className="mt-8" />
+                      )}
                     </div>
-                  </div>
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       </div>
