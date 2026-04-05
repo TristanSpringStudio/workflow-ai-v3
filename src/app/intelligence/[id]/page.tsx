@@ -48,10 +48,13 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
   return (
     <AppShell>
       <div className="flex-1 flex flex-col min-h-0">
-        <PageHeader title={task.title} />
+        <PageHeader
+          title={task.title}
+          breadcrumbs={[{ label: "Company Intelligence", href: "/intelligence", icon: "M9.348 14.651a3.75 3.75 0 010-5.303m5.304 0a3.75 3.75 0 010 5.303m-7.425 2.122a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M5.106 18.894c-3.808-3.808-3.808-9.98 0-13.789m13.788 0c3.808 3.808 3.808 9.981 0 13.79M12 12h.008v.007H12V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" }]}
+        />
 
         {/* Tabs bar */}
-        <div className="shrink-0 px-6 border-b border-border">
+        <div className="shrink-0 px-6 py-2 border-b border-border">
           <div className="flex gap-0.5">
             {TABS.map((t) => (
               <button
