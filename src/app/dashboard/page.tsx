@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
+import PageHeader from "@/components/PageHeader";
 import { company, tasks, getDepartments, getStats, roadmap } from "@/lib/mock-data";
 
 const SUGGESTED_QUESTIONS = [
@@ -44,6 +45,7 @@ export default function HomePage() {
 
   return (
     <AppShell>
+      <PageHeader title="Home" subtitle={`${company.name} · ${stats.totalTasks} tasks mapped`} />
       <div className="flex-1 overflow-y-auto scroll-thin">
         <div className="max-w-4xl mx-auto px-8 py-8">
 

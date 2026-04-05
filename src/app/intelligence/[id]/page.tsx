@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import AppShell from "@/components/AppShell";
+import PageHeader from "@/components/PageHeader";
 import { tasks, contributors } from "@/lib/mock-data";
 import type { TaskStep } from "@/lib/types";
 
@@ -47,19 +48,11 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
   return (
     <AppShell>
       <div className="flex-1 flex flex-col min-h-0">
-        {/* Breadcrumb + title bar */}
-        <div className="shrink-0 px-6 py-3 border-b border-border">
-          <div className="flex items-center gap-2 text-[12px] text-muted mb-1">
-            <Link href="/intelligence" className="hover:text-foreground transition-colors flex items-center gap-1">
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.348 14.651a3.75 3.75 0 010-5.303m5.304 0a3.75 3.75 0 010 5.303" /></svg>
-              Company Intelligence
-            </Link>
-            <span>/</span>
-            <span className="text-foreground font-medium">{task.title}</span>
-          </div>
+        <PageHeader title={task.title} subtitle={`${task.department} · ${task.frequency} · ${task.timeSpent}`} />
 
-          {/* Tabs */}
-          <div className="flex gap-0.5 mt-2">
+        {/* Tabs bar */}
+        <div className="shrink-0 px-6 border-b border-border">
+          <div className="flex gap-0.5">
             {TABS.map((t) => (
               <button
                 key={t.key}

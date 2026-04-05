@@ -1,15 +1,16 @@
 "use client";
 
 import AppShell from "@/components/AppShell";
+import PageHeader from "@/components/PageHeader";
 import { company, contributors, getDepartments } from "@/lib/mock-data";
 
 export default function SettingsPage() {
   const departments = getDepartments();
   return (
     <AppShell>
+      <PageHeader title="Settings" subtitle={company.name} />
       <div className="flex-1 overflow-y-auto scroll-thin">
         <div className="max-w-2xl mx-auto px-8 py-8">
-          <h1 className="text-2xl font-semibold tracking-tight mb-8">Settings</h1>
 
           <section className="mb-8">
             <h2 className="text-[13px] font-semibold text-muted-light uppercase tracking-wide mb-4">Company</h2>

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 import AppShell from "@/components/AppShell";
+import PageHeader from "@/components/PageHeader";
 import { contributors } from "@/lib/mock-data";
 
 const TOOL_DOMAINS: Record<string, string> = {
@@ -175,16 +176,11 @@ export default function AssessPage() {
   return (
     <AppShell>
       <div className="flex-1 flex flex-col min-h-0">
-        {/* Header */}
-        <div className="shrink-0 h-14 border-b border-border px-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-[14px] font-semibold">AI Assistant</h1>
-            <p className="text-[11px] text-muted-light">{contributors.length} interviews completed · Add context to the intelligence layer</p>
-          </div>
+        <PageHeader title="AI Assistant" subtitle={`${contributors.length} interviews completed · Add context to the intelligence layer`}>
           <div className="w-40 h-1.5 bg-border rounded-full overflow-hidden">
             <div className="h-full bg-accent rounded-full transition-all" style={{ width: `${Math.min((step / 9) * 100, 100)}%` }} />
           </div>
-        </div>
+        </PageHeader>
 
         {/* Chat — scrollable area */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-thin px-6 py-6">

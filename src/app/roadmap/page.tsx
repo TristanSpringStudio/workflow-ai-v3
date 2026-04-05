@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
+import PageHeader from "@/components/PageHeader";
 import { tasks, roadmap, company } from "@/lib/mock-data";
 
 export default function RoadmapPage() {
   return (
     <AppShell>
+      <PageHeader title="Implementation Plan" subtitle={`${roadmap.length} phases · ${tasks.filter((t) => t.recommendation).length} workflows`} />
       <div className="flex-1 overflow-y-auto scroll-thin">
         <div className="max-w-4xl mx-auto px-8 py-8">
-          <h1 className="text-2xl font-semibold tracking-tight mb-2">Implementation Roadmap</h1>
-          <p className="text-[14px] text-muted mb-8">A phased plan to make {company.name} intelligence-native.</p>
 
           <div className="space-y-8">
             {roadmap.map((phase) => {

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
+import PageHeader from "@/components/PageHeader";
 import { tasks, contributors } from "@/lib/mock-data";
 
 const DEPT_COLORS: Record<string, string> = {
@@ -30,31 +31,24 @@ export default function IntelligencePage() {
   return (
     <AppShell>
       <div className="flex-1 flex flex-col min-h-0">
-        {/* Header */}
-        <div className="shrink-0 px-6 py-4 border-b border-border flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.348 14.651a3.75 3.75 0 010-5.303m5.304 0a3.75 3.75 0 010 5.303" /></svg>
-            <h1 className="text-[15px] font-semibold">Company Intelligence</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setSortBy(sortBy === "updated" ? "title" : sortBy === "title" ? "dept" : "updated")}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-muted border border-border hover:border-muted-light transition-colors"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" /></svg>
-              Sorted by <span className="text-foreground">{sortBy === "updated" ? "Last updated" : sortBy === "title" ? "Name" : "Department"}</span>
+        <PageHeader title="Company Intelligence" subtitle={`${tasks.length} workflows · ${contributors.length} contributors`}>
+          <button
+            onClick={() => setSortBy(sortBy === "updated" ? "title" : sortBy === "title" ? "dept" : "updated")}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-muted border border-border hover:border-muted-light transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" /></svg>
+            Sorted by <span className="text-foreground">{sortBy === "updated" ? "Last updated" : sortBy === "title" ? "Name" : "Department"}</span>
+          </button>
+          {filterDept && (
+            <button onClick={() => setFilterDept(null)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-accent bg-accent/5 border border-accent/20">
+              {filterDept}
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
-            {filterDept && (
-              <button onClick={() => setFilterDept(null)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-accent bg-accent/5 border border-accent/20">
-                {filterDept}
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            )}
-            <button className="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-foreground hover:bg-surface transition-colors">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-            </button>
-          </div>
-        </div>
+          )}
+          <button className="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-foreground hover:bg-surface transition-colors">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+          </button>
+        </PageHeader>
 
         {/* Table */}
         <div className="flex-1 overflow-y-auto scroll-thin">

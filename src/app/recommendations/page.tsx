@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
+import PageHeader from "@/components/PageHeader";
 import { tasks } from "@/lib/mock-data";
 
 export default function RecommendationsPage() {
@@ -17,10 +18,9 @@ export default function RecommendationsPage() {
 
   return (
     <AppShell>
+      <PageHeader title="Recommendations" subtitle={`${recsWithTasks.length} opportunities · ${totalTimeSaved} hrs/week potential savings`} />
       <div className="flex-1 overflow-y-auto scroll-thin">
         <div className="max-w-4xl mx-auto px-8 py-8">
-          <h1 className="text-2xl font-semibold tracking-tight mb-2">Recommendations</h1>
-          <p className="text-[14px] text-muted mb-6">{recsWithTasks.length} AI workflow opportunities · {totalTimeSaved} hrs/week potential savings</p>
 
           {/* Filter */}
           <div className="flex gap-2 mb-6">
