@@ -48,7 +48,7 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
   return (
     <AppShell>
       <div className="flex-1 flex flex-col min-h-0">
-        <PageHeader title={task.title} subtitle={`${task.department} · ${task.frequency} · ${task.timeSpent}`} />
+        <PageHeader title={task.title} />
 
         {/* Tabs bar */}
         <div className="shrink-0 px-6 border-b border-border">

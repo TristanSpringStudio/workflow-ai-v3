@@ -176,7 +176,7 @@ export default function AssessPage() {
   return (
     <AppShell>
       <div className="flex-1 flex flex-col min-h-0">
-        <PageHeader title="AI Assistant" subtitle={`${contributors.length} interviews completed · Add context to the intelligence layer`}>
+        <PageHeader title="AI Assistant">
           <div className="w-40 h-1.5 bg-border rounded-full overflow-hidden">
             <div className="h-full bg-accent rounded-full transition-all" style={{ width: `${Math.min((step / 9) * 100, 100)}%` }} />
           </div>

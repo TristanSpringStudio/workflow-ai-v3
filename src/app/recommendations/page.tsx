@@ -18,7 +18,7 @@ export default function RecommendationsPage() {
 
   return (
     <AppShell>
-      <PageHeader title="Recommendations" subtitle={`${recsWithTasks.length} opportunities · ${totalTimeSaved} hrs/week potential savings`} />
+      <PageHeader title="Recommendations" />
       <div className="flex-1 overflow-y-auto scroll-thin">
         <div className="max-w-4xl mx-auto px-8 py-8">
 

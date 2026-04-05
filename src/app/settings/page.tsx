@@ -8,7 +8,7 @@ export default function SettingsPage() {
   const departments = getDepartments();
   return (
     <AppShell>
-      <PageHeader title="Settings" subtitle={company.name} />
+      <PageHeader title="Settings" />
       <div className="flex-1 overflow-y-auto scroll-thin">
         <div className="max-w-2xl mx-auto px-8 py-8">
 

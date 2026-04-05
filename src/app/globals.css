@@ -37,6 +37,11 @@ body {
 /* Gradient border for chat */
 .chat-border {
   position: relative;
+  box-shadow: 0 0 20px rgba(147, 197, 253, 0.15), 0 0 40px rgba(196, 181, 253, 0.08);
+  transition: box-shadow 0.3s ease;
+}
+.chat-border:focus-within {
+  box-shadow: 0 0 24px rgba(147, 197, 253, 0.25), 0 0 48px rgba(196, 181, 253, 0.15);
 }
 .chat-border::before {
   content: '';
@@ -44,9 +49,13 @@ body {
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, #93c5fd, #c4b5fd, #f9a8d4, #93c5fd);
+  background: linear-gradient(135deg, #93c5fd80, #c4b5fd80, #f9a8d480, #93c5fd80);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   -webkit-mask-composite: xor;
   pointer-events: none;
+  transition: background 0.3s ease;
+}
+.chat-border:focus-within::before {
+  background: linear-gradient(135deg, #93c5fd, #c4b5fd, #f9a8d4, #93c5fd);
 }

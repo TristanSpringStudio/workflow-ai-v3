@@ -8,7 +8,7 @@ import { tasks, roadmap, company } from "@/lib/mock-data";
 export default function RoadmapPage() {
   return (
     <AppShell>
-      <PageHeader title="Implementation Plan" subtitle={`${roadmap.length} phases · ${tasks.filter((t) => t.recommendation).length} workflows`} />
+      <PageHeader title="Implementation Plan" />
       <div className="flex-1 overflow-y-auto scroll-thin">
         <div className="max-w-4xl mx-auto px-8 py-8">
 

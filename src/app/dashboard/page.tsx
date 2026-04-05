@@ -45,7 +45,7 @@ export default function HomePage() {
 
   return (
     <AppShell>
-      <PageHeader title="Home" subtitle={`${company.name} · ${stats.totalTasks} tasks mapped`} />
+      <PageHeader title="Home" />
       <div className="flex-1 overflow-y-auto scroll-thin">
         <div className="max-w-4xl mx-auto px-8 py-8">
 
