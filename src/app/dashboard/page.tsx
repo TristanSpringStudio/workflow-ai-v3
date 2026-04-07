@@ -342,7 +342,7 @@ export default function HomePage() {
             {SUGGESTED_QUESTIONS.map((q, i) => {
               const cfg = DEPT_ICONS[q.dept];
               return (
-                <button key={i} onClick={() => { setChatInput(q.label); setTimeout(() => handleSendChat(q.label), 50); }} className="flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] border border-border hover:border-muted-light transition-colors">
+                <button key={i} onClick={() => { setChatInput(q.label); inputRef.current?.focus(); }} className="flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] border border-border hover:border-muted-light transition-colors">
                   {cfg && <span className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: cfg.bg }}><cfg.Icon className="w-2.5 h-2.5 text-white" strokeWidth={2} /></span>}
                   {q.label}
                 </button>
