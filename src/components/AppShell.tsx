@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Radio, ClipboardList, Sparkles, Settings, ChevronRight, DollarSign, Megaphone, TrendingUp, Users, Share2, Headphones, Wrench, PackageSearch, FlaskConical } from "lucide-react";
+import { Home, Radio, ClipboardList, Sparkles, Settings, ChevronRight, DollarSign, Megaphone, TrendingUp, Users, Share2, Headphones, Wrench, PackageSearch, FlaskConical, MessageSquare } from "lucide-react";
 import { company } from "@/lib/mock-data";
 import { getDepartments } from "@/lib/mock-data";
 
@@ -24,6 +24,7 @@ const DEFAULT_DEPT = { color: "#ffffff", bg: "#6b7280", Icon: Users };
 const NAV_ITEMS = [
   { label: "Home", href: "/dashboard", Icon: Home },
   { label: "Company Intelligence", href: "/intelligence", Icon: Radio },
+  { label: "Interviews", href: "/interviews", Icon: MessageSquare },
   { label: "Implementation Plan", href: "/roadmap", Icon: ClipboardList },
   { label: "AI Assistant", href: "/assess", Icon: Sparkles },
 ];

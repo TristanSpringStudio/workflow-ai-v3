@@ -19,6 +19,106 @@ export const contributors: Contributor[] = [
   { id: "c6", name: "David Kim", role: "Finance Manager", department: "Finance", aiComfort: "beginner", interviewedAt: "2026-03-20T10:00:00Z" },
 ];
 
+// ─── Interview Records ───
+export interface InterviewRecord {
+  id: string;
+  contributorId: string;
+  status: "completed" | "in-progress" | "invited";
+  duration?: string;
+  completedAt?: string;
+  invitedAt?: string;
+  workflowsExtracted: number;
+  transcript?: { role: "assistant" | "user"; content: string }[];
+}
+
+export const interviews: InterviewRecord[] = [
+  {
+    id: "iv1", contributorId: "c1", status: "completed", duration: "12 min", completedAt: "2026-03-15T10:12:00Z", workflowsExtracted: 4,
+    transcript: [
+      { role: "assistant", content: "Hey! I'm going to ask you about your role, daily work, and how information flows through your team. What's your name and what do you do?" },
+      { role: "user", content: "Sarah Chen, I'm the Marketing Manager" },
+      { role: "assistant", content: "Great to meet you, Sarah. Which department are you in?" },
+      { role: "user", content: "Marketing" },
+      { role: "assistant", content: "Got it — Marketing. What tools do you use daily?" },
+      { role: "user", content: "HubSpot, Google Analytics, Canva, Slack, Google Docs, Notion" },
+      { role: "assistant", content: "Good stack. Walk me through your main tasks — what does a typical day or week look like?" },
+      { role: "user", content: "I write campaign briefs, compile the weekly performance report, review content from our writers, plan the social media calendar, and coordinate with vendors on creative assets." },
+      { role: "assistant", content: "What feels the most repetitive or tedious?" },
+      { role: "user", content: "The weekly report is the worst. Every Friday I spend 3 hours pulling data from GA, HubSpot, and our spreadsheets. The format never changes — it's the same template every time. I also spend a lot of time editing blog posts for brand voice consistency." },
+      { role: "assistant", content: "Where do you get the information you need? Which teams or tools do you pull data from?" },
+      { role: "user", content: "Sales gives me pipeline data for the report. Product sends roadmap updates so I know what to promote. Finance approves my budgets." },
+      { role: "assistant", content: "What do you hand off to other teams?" },
+      { role: "user", content: "I send qualified leads and campaign assets to Sales through HubSpot and email. I also send customer feedback summaries to Product in a Notion doc every week." },
+      { role: "assistant", content: "Last one — how comfortable are you with AI tools?" },
+      { role: "user", content: "I use Claude sometimes for drafting copy and brainstorming ideas. Intermediate I'd say." },
+    ],
+  },
+  {
+    id: "iv2", contributorId: "c2", status: "completed", duration: "9 min", completedAt: "2026-03-16T14:09:00Z", workflowsExtracted: 3,
+    transcript: [
+      { role: "assistant", content: "Hey! What's your name and what do you do?" },
+      { role: "user", content: "Marcus Rivera, Sales Director" },
+      { role: "assistant", content: "Which department?" },
+      { role: "user", content: "Sales" },
+      { role: "assistant", content: "What tools do you use daily?" },
+      { role: "user", content: "Salesforce, Gmail, Slack, Google Sheets, Zoom, LinkedIn" },
+      { role: "assistant", content: "Walk me through your typical week." },
+      { role: "user", content: "Prospect outreach, pipeline reviews, deal negotiations, team standups, and forecasting. I spend about 2 hours a day just writing personalized outreach emails — 20 minutes per email if I really personalize it." },
+      { role: "assistant", content: "What's the most tedious?" },
+      { role: "user", content: "The CRM logging after every call or email. Half the time I forget. And the weekly forecast requires pulling from 5 different reports." },
+      { role: "assistant", content: "How comfortable with AI?" },
+      { role: "user", content: "Tried a few times but not regularly. Beginner." },
+    ],
+  },
+  {
+    id: "iv3", contributorId: "c3", status: "completed", duration: "14 min", completedAt: "2026-03-17T09:14:00Z", workflowsExtracted: 5,
+    transcript: [
+      { role: "assistant", content: "Hey! What's your name and what do you do?" },
+      { role: "user", content: "Priya Patel, Operations Manager" },
+      { role: "assistant", content: "Walk me through your typical week." },
+      { role: "user", content: "Process documentation, vendor management, coordinating across teams, status reporting, and client onboarding. The onboarding is the most time-consuming — it takes about 4 hours per client and the whole thing takes 2 weeks end to end." },
+      { role: "assistant", content: "What's the most tedious?" },
+      { role: "user", content: "Writing SOPs is painful — most of our processes live in people's heads. And I spend 8 hours a week on status meetings and writing 3 versions of the same update for different audiences." },
+    ],
+  },
+  {
+    id: "iv4", contributorId: "c4", status: "completed", duration: "8 min", completedAt: "2026-03-18T11:08:00Z", workflowsExtracted: 3,
+    transcript: [
+      { role: "assistant", content: "Hey! What's your name and what do you do?" },
+      { role: "user", content: "James Park, Engineering Lead" },
+      { role: "assistant", content: "What's your typical day?" },
+      { role: "user", content: "Code review, sprint planning, architecture decisions, bug triage, and documentation. The context switching between 6 tools kills me. And writing PR descriptions and release notes feels like busywork." },
+    ],
+  },
+  {
+    id: "iv5", contributorId: "c5", status: "completed", duration: "11 min", completedAt: "2026-03-19T13:11:00Z", workflowsExtracted: 3,
+    transcript: [
+      { role: "assistant", content: "Hey! What's your name and what do you do?" },
+      { role: "user", content: "Lisa Nakamura, Product Manager" },
+      { role: "assistant", content: "What's your typical week?" },
+      { role: "user", content: "Writing PRDs, synthesizing user research from 4 different channels, keeping the roadmap updated, and stakeholder alignment. PRDs take a full day to write." },
+    ],
+  },
+  {
+    id: "iv6", contributorId: "c6", status: "completed", duration: "10 min", completedAt: "2026-03-20T10:10:00Z", workflowsExtracted: 3,
+    transcript: [
+      { role: "assistant", content: "Hey! What's your name and what do you do?" },
+      { role: "user", content: "David Kim, Finance Manager" },
+      { role: "assistant", content: "Walk me through your biggest time sinks." },
+      { role: "user", content: "Month-end close takes 5 full days. I'm reconciling data across QuickBooks, Salesforce, and spreadsheets. 95% of the categorization is the same every month. By the time I finish the P&L, the data is already a week old." },
+    ],
+  },
+  // Pending invites
+  { id: "iv7", contributorId: "c7-pending", status: "invited", invitedAt: "2026-03-21T09:00:00Z", workflowsExtracted: 0 },
+  { id: "iv8", contributorId: "c8-pending", status: "invited", invitedAt: "2026-03-21T09:00:00Z", workflowsExtracted: 0 },
+];
+
+// Pending contributors (invited but haven't completed)
+export const pendingContributors = [
+  { id: "c7-pending", name: "Alex Torres", role: "Customer Success Lead", department: "Support", email: "alex@zippyzaps.com" },
+  { id: "c8-pending", name: "Rachel Kim", role: "HR Coordinator", department: "HR", email: "rachel@zippyzaps.com" },
+];
+
 // ─── Tasks: the intelligence layer ───
 export const tasks: Task[] = [
   {
