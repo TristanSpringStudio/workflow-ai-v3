@@ -77,7 +77,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   return (
                     <Link
                       key={dept.name}
-                      href={`/intelligence?dept=${dept.name}`}
+                      href={`/departments/${dept.name.toLowerCase()}`}
                       className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[12px] text-muted hover:text-foreground hover:bg-foreground/[0.03] transition-colors"
                     >
                       <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ background: cfg.bg }}>
