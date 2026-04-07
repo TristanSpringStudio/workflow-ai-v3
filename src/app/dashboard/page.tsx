@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Sparkles, Activity, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, User, X, AlertTriangle, ArrowRight, Send } from "lucide-react";
+import { Sparkles, Activity, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, User, X, AlertTriangle, ArrowRight, Send, ChevronDown, Check, Home, MessageSquare } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
 import { company } from "@/lib/mock-data";
@@ -130,9 +130,28 @@ export default function HomePage() {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [activeFinding, setActiveFinding] = useState<Finding | null>(null);
+  const [chatTitle, setChatTitle] = useState("New AI chat");
+  const [chatHistoryOpen, setChatHistoryOpen] = useState(false);
+  const [chatHistory] = useState([
+    { id: "ch1", title: "New AI chat", date: "Today", active: true },
+    { id: "ch2", title: "Sales automation opportunities", date: "Today", active: false },
+    { id: "ch3", title: "Marketing report analysis", date: "Previous 7 days", active: false },
+    { id: "ch4", title: "Onboarding bottleneck deep dive", date: "Previous 7 days", active: false },
+    { id: "ch5", title: "Finance close process review", date: "Previous 30 days", active: false },
+    { id: "ch6", title: "Cross-team data redundancy", date: "Previous 30 days", active: false },
+  ]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const chatInputRef = useRef<HTMLInputElement>(null);
+  const historyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (historyRef.current && !historyRef.current.contains(e.target as Node)) setChatHistoryOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
@@ -146,7 +165,10 @@ export default function HomePage() {
     if (!value || isTyping) return;
 
     // Transition to chat mode
-    if (!chatMode) setChatMode(true);
+    if (!chatMode) {
+      setChatMode(true);
+      setChatTitle(value.length > 35 ? value.slice(0, 35) + "..." : value);
+    }
 
     const userMsg: ChatMsg = { id: Math.random().toString(36).slice(2, 8), role: "user", content: value };
     setMessages((p) => [...p, userMsg]);
@@ -171,7 +193,58 @@ export default function HomePage() {
   if (chatMode) {
     return (
       <AppShell>
-        <PageHeader title="Home" />
+        {/* Breadcrumb header with chat history dropdown */}
+        <div className="shrink-0 h-14 border-b border-border px-6 flex items-center">
+          <div className="flex items-center gap-2 text-[14px]">
+            <button onClick={() => { setChatMode(false); setMessages([]); setChatTitle("New AI chat"); }} className="flex items-center gap-1.5 text-muted hover:text-foreground transition-colors">
+              <Home className="w-4 h-4" strokeWidth={1.5} />
+              <span>Home</span>
+            </button>
+            <span className="text-muted-light">/</span>
+
+            {/* Chat title with dropdown */}
+            <div ref={historyRef} className="relative">
+              <button
+                onClick={() => setChatHistoryOpen(!chatHistoryOpen)}
+                className="flex items-center gap-1 font-semibold text-foreground hover:text-accent transition-colors"
+              >
+                {chatTitle}
+                <ChevronDown className={`w-3.5 h-3.5 text-muted transition-transform ${chatHistoryOpen ? "rotate-180" : ""}`} strokeWidth={2} />
+              </button>
+
+              {chatHistoryOpen && (
+                <div className="absolute top-full left-0 mt-1 w-[280px] rounded-xl bg-background border border-border shadow-lg z-30 py-1 max-h-[400px] overflow-y-auto scroll-thin">
+                  {(() => {
+                    const groups: Record<string, typeof chatHistory> = {};
+                    chatHistory.forEach((ch) => {
+                      if (!groups[ch.date]) groups[ch.date] = [];
+                      groups[ch.date].push(ch);
+                    });
+                    return Object.entries(groups).map(([date, chats]) => (
+                      <div key={date}>
+                        <p className="px-3 pt-2 pb-1 text-[10px] font-medium text-muted-light uppercase tracking-widest">{date}</p>
+                        {chats.map((ch) => (
+                          <button
+                            key={ch.id}
+                            onClick={() => {
+                              setChatTitle(ch.title);
+                              setChatHistoryOpen(false);
+                            }}
+                            className="w-full flex items-center justify-between px-3 py-2 text-[13px] text-left hover:bg-surface transition-colors"
+                          >
+                            <span className={ch.title === chatTitle ? "text-foreground font-medium" : "text-muted"}>{ch.title}</span>
+                            {ch.title === chatTitle && <Check className="w-3.5 h-3.5 text-accent" strokeWidth={2} />}
+                          </button>
+                        ))}
+                      </div>
+                    ));
+                  })()}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         <div className="flex-1 flex flex-col min-h-0">
           {/* Messages */}
           <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-thin px-6 py-6">
@@ -222,9 +295,6 @@ export default function HomePage() {
                   </button>
                 </form>
               </div>
-              <button onClick={() => setChatMode(false)} className="mt-2 text-[11px] text-muted-light hover:text-muted transition-colors w-full text-center">
-                Back to home
-              </button>
             </div>
           </div>
         </div>
