@@ -220,7 +220,7 @@ export default function WorkflowCanvas({ tasks }: WorkflowCanvasProps) {
             <Link
               key={task.id}
               href={`/intelligence/${task.id}`}
-              title={`${task.title}\n${task.department} · ${task.frequency} · ${task.timeSpent}`}
+              data-tooltip={task.title}
               className="absolute block cursor-pointer"
               style={{
                 left: pos.x,
