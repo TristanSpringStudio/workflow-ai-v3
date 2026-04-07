@@ -124,7 +124,8 @@ export default function WorkflowCanvas({ tasks }: WorkflowCanvasProps) {
       <svg
         width="100%"
         height="100%"
-        className={dragging ? "cursor-grabbing" : "cursor-grab"}
+        className={`select-none ${dragging ? "cursor-grabbing" : "cursor-grab"}`}
+        style={{ touchAction: "none" }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
