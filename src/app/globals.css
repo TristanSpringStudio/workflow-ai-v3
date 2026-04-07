@@ -41,10 +41,7 @@ body {
   100% { background-position: 0% 50%; }
 }
 
-/* Custom tooltip */
-[data-tooltip] {
-  position: relative;
-}
+/* Custom tooltip — don't override position on already-positioned elements */
 [data-tooltip]::after {
   content: attr(data-tooltip);
   position: absolute;
