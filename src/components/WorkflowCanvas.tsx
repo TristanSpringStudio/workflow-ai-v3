@@ -20,11 +20,14 @@ interface WorkflowCanvasProps {
   tasks: Task[];
 }
 
-const NODE_W = 180;
-const NODE_H = 70;
-const DEPT_PADDING = 20;
-const ROW_GAP = 30;
-const COL_GAP = 24;
+const NODE_W = 190;
+const NODE_H = 72;
+const LABEL_H = 24; // space for department label
+const PAD_X = 16;
+const PAD_TOP = 30; // padding top inside row (below label)
+const PAD_BOTTOM = 16;
+const ROW_GAP = 24;
+const COL_GAP = 20;
 
 export default function WorkflowCanvas({ tasks }: WorkflowCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -40,18 +43,22 @@ export default function WorkflowCanvas({ tasks }: WorkflowCanvasProps) {
   const tasksByDept: Record<string, Task[]> = {};
   departments.forEach((d) => { tasksByDept[d] = tasks.filter((t) => t.department === d); });
 
-  // Layout positions
+  // Layout positions — nodes sit inside their department row
   const positions: Record<string, { x: number; y: number }> = {};
+  const deptRows: { dept: string; y: number; w: number; h: number }[] = [];
   let currentY = 0;
   departments.forEach((dept) => {
     const deptTasks = tasksByDept[dept];
+    const rowH = PAD_TOP + NODE_H + PAD_BOTTOM;
+    const rowW = PAD_X + deptTasks.length * (NODE_W + COL_GAP) - COL_GAP + PAD_X;
+    deptRows.push({ dept, y: currentY, w: Math.max(rowW, 420), h: rowH });
     deptTasks.forEach((task, i) => {
       positions[task.id] = {
-        x: i * (NODE_W + COL_GAP),
-        y: currentY + DEPT_PADDING,
+        x: PAD_X + i * (NODE_W + COL_GAP),
+        y: currentY + PAD_TOP,
       };
     });
-    currentY += NODE_H + DEPT_PADDING * 2 + ROW_GAP;
+    currentY += rowH + ROW_GAP;
   });
 
   // Connections
@@ -133,38 +140,30 @@ export default function WorkflowCanvas({ tasks }: WorkflowCanvasProps) {
         }}
       >
         {/* Department row backgrounds */}
-        {(() => {
-          let rowY = 0;
-          return departments.map((dept) => {
-            const cfg = DEPT_CONFIG[dept] || DEFAULT_CFG;
-            const deptTasks = tasksByDept[dept];
-            const rowW = Math.max(deptTasks.length * (NODE_W + COL_GAP) + 40, 400);
-            const rowH = NODE_H + DEPT_PADDING * 2;
-            const y = rowY;
-            rowY += rowH + ROW_GAP;
-            return (
-              <div
-                key={`bg-${dept}`}
-                className="absolute rounded-2xl"
-                style={{
-                  left: -10,
-                  top: y,
-                  width: rowW,
-                  height: rowH,
-                  background: cfg.light,
-                  border: `1px solid ${cfg.bg}30`,
-                }}
-              >
-                <span className="absolute top-2 left-3 text-[10px] font-semibold uppercase tracking-wider" style={{ color: `${cfg.bg}99` }}>
-                  {dept}
-                </span>
-              </div>
-            );
-          });
-        })()}
+        {deptRows.map((row) => {
+          const cfg = DEPT_CONFIG[row.dept] || DEFAULT_CFG;
+          return (
+            <div
+              key={`bg-${row.dept}`}
+              className="absolute rounded-2xl"
+              style={{
+                left: 0,
+                top: row.y,
+                width: row.w,
+                height: row.h,
+                background: cfg.light,
+                border: `1px solid ${cfg.bg}30`,
+              }}
+            >
+              <span className="absolute top-2.5 left-3.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: `${cfg.bg}99` }}>
+                {row.dept}
+              </span>
+            </div>
+          );
+        })}
 
         {/* SVG for connections only */}
-        <svg className="absolute top-0 left-0 pointer-events-none" width={2000} height={currentY + 200} style={{ overflow: "visible" }}>
+        <svg className="absolute top-0 left-0 pointer-events-none" width={3000} height={currentY + 100} style={{ overflow: "visible" }}>
           <defs>
             <marker id="wc-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
               <path d="M 0 0 L 10 5 L 0 10 z" fill="#c4c4c4" />
