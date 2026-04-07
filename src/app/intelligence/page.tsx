@@ -2,8 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { List, Map } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
+import WorkflowCanvas from "@/components/WorkflowCanvas";
 import { tasks, getDepartments, contributors } from "@/lib/mock-data";
 
 const DEPT_COLORS: Record<string, string> = {
@@ -37,6 +39,7 @@ export default function IntelligencePage() {
   const [filterContributors, setFilterContributors] = useState<Set<string>>(new Set());
   const [filterStatuses, setFilterStatuses] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
+  const [view, setView] = useState<"list" | "canvas">("list");
   const sortRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
 
@@ -220,20 +223,37 @@ export default function IntelligencePage() {
             })}
           </div>
 
-          {/* Search */}
-          <div className="relative">
-            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search..."
-              className="w-44 h-8 pl-8 pr-3 rounded-lg bg-surface border border-border text-[12px] placeholder:text-muted-light focus:outline-none focus:border-accent/40 focus:w-64 transition-all"
-            />
+          {/* View toggle + Search */}
+          <div className="flex items-center gap-2">
+            <div className="flex gap-0.5 bg-surface border border-border rounded-lg p-0.5">
+              <button onClick={() => setView("list")} className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${view === "list" ? "bg-background text-foreground shadow-sm" : "text-muted"}`}>
+                <List className="w-3.5 h-3.5" strokeWidth={1.5} />
+              </button>
+              <button onClick={() => setView("canvas")} className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${view === "canvas" ? "bg-background text-foreground shadow-sm" : "text-muted"}`}>
+                <Map className="w-3.5 h-3.5" strokeWidth={1.5} />
+              </button>
+            </div>
+            <div className="relative">
+              <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search..."
+                className="w-44 h-8 pl-8 pr-3 rounded-lg bg-surface border border-border text-[12px] placeholder:text-muted-light focus:outline-none focus:border-accent/40 focus:w-64 transition-all"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Table */}
-        <div className="flex-1 overflow-y-auto scroll-thin">
+        {/* Canvas view */}
+        {view === "canvas" && (
+          <div className="flex-1">
+            <WorkflowCanvas tasks={sorted} />
+          </div>
+        )}
+
+        {/* Table (list view) */}
+        {view === "list" && <div className="flex-1 overflow-y-auto scroll-thin">
           {/* Table header */}
           <div className="sticky top-0 z-10 bg-surface/80 backdrop-blur-sm border-b border-border px-6 py-2 grid grid-cols-[1fr_200px_160px_120px] gap-4 text-[11px] font-medium text-muted-light uppercase tracking-wider">
             <span>Workflow</span>
@@ -287,13 +307,7 @@ export default function IntelligencePage() {
               <button onClick={clearFilters} className="text-[12px] text-accent hover:text-accent-hover mt-1">Clear filters</button>
             </div>
           )}
-        </div>
-
-        {/* Ask Vishtan FAB */}
-        <Link href="/assess" className="fixed bottom-6 right-6 flex items-center gap-2 px-4 py-2.5 rounded-full bg-accent text-white text-[13px] font-medium shadow-lg hover:bg-accent-hover transition-colors z-20">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>
-          Ask Vishtan
-        </Link>
+        </div>}
       </div>
     </AppShell>
   );
