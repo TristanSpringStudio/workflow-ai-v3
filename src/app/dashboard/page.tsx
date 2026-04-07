@@ -220,21 +220,19 @@ export default function HomePage() {
                   <div key={finding.id}>
                     <button onClick={() => setActiveFinding(finding)} className="w-full text-left hover:bg-surface/50 -mx-2 px-2 py-1.5 rounded-lg transition-colors">
                       {/* Department-based finding */}
-                      {finding.depts && (
-                        <div>
-                          <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                            {finding.depts.map((d) => <DeptChip key={d} dept={d} />)}
-                            <span className="text-[13px] font-medium">{finding.text}</span>
-                          </div>
+                      {finding.depts && !finding.person && (
+                        <div className="inline">
+                          {finding.depts.map((d) => <span key={d} className="inline-block mr-1.5 align-middle"><DeptChip dept={d} /></span>)}
+                          <span className="text-[13px] font-medium align-middle">{finding.text}</span>
                         </div>
                       )}
 
                       {/* Person-based finding */}
                       {finding.person && (
                         <div>
-                          <div className="flex flex-wrap items-center gap-1.5 mb-2">
-                            <PersonChip name={finding.person} />
-                            <span className="text-[13px] font-medium">{finding.text}</span>
+                          <div className="inline">
+                            <span className="inline-block mr-1.5 align-middle"><PersonChip name={finding.person} /></span>
+                            <span className="text-[13px] font-medium align-middle">{finding.text}</span>
                           </div>
                           {finding.actions && (
                             <div className="flex flex-wrap gap-1.5 ml-0">
