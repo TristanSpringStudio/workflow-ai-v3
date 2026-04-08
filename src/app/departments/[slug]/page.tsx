@@ -108,49 +108,47 @@ export default function DepartmentPage({ params }: { params: Promise<{ slug: str
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-4 gap-4 mb-8">
-            <div className="p-4 rounded-xl border border-border">
-              <p className="text-2xl font-bold">{deptTasks.length}</p>
-              <p className="text-[11px] text-muted">Workflows mapped</p>
+          {/* Stats as data rows */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between py-2.5 border-b border-border">
+              <span className="text-[12px] text-muted">Workflows mapped</span>
+              <span className="text-[12px] font-semibold">{deptTasks.length}</span>
             </div>
-            <div className="p-4 rounded-xl border border-border">
-              <p className="text-2xl font-bold">{totalTimeSpent} <span className="text-[13px] font-normal text-muted">hrs</span></p>
-              <p className="text-[11px] text-muted">Weekly time spent</p>
+            <div className="flex items-center justify-between py-2.5 border-b border-border">
+              <span className="text-[12px] text-muted">Weekly time spent</span>
+              <span className="text-[12px] font-semibold">{totalTimeSpent} hrs</span>
             </div>
-            <div className="p-4 rounded-xl border border-border">
-              <p className="text-2xl font-bold text-green-600">{totalSaveable} <span className="text-[13px] font-normal text-muted">hrs</span></p>
-              <p className="text-[11px] text-muted">Saveable per week</p>
+            <div className="flex items-center justify-between py-2.5 border-b border-border">
+              <span className="text-[12px] text-muted">Saveable per week</span>
+              <span className="text-[12px] font-semibold text-green-600">{totalSaveable} hrs</span>
             </div>
-            <div className="p-4 rounded-xl border border-border">
-              <p className="text-2xl font-bold text-red-500">{bottlenecks.length}</p>
-              <p className="text-[11px] text-muted">Bottlenecks</p>
+            <div className="flex items-center justify-between py-2.5 border-b border-border">
+              <span className="text-[12px] text-muted">Bottlenecks</span>
+              <span className={`text-[12px] font-semibold ${bottlenecks.length > 0 ? "text-red-500" : ""}`}>{bottlenecks.length}</span>
             </div>
           </div>
 
           {/* Team */}
           <div className="mb-8">
-            <h3 className="text-[13px] font-semibold mb-3">Team</h3>
-            <div className="flex gap-3">
-              {deptContributors.map((c) => {
-                const iv = deptInterviews.find((i) => i.contributorId === c.id);
-                return (
-                  <Link
-                    key={c.id}
-                    href={iv ? `/interviews/${iv.id}` : "/interviews"}
-                    className="group flex items-center gap-2.5 px-4 py-3 rounded-xl border border-border hover:border-muted-light transition-colors"
-                  >
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white" style={{ background: cfg.bg }}>
+            <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Team</h3>
+            {deptContributors.map((c) => {
+              const iv = deptInterviews.find((i) => i.contributorId === c.id);
+              return (
+                <Link
+                  key={c.id}
+                  href={iv ? `/interviews/${iv.id}` : "/interviews"}
+                  className="group flex items-center justify-between py-2.5 border-b border-border last:border-0 hover:bg-surface/50 -mx-2 px-2 rounded-lg transition-colors"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ background: cfg.bg }}>
                       {c.name.charAt(0)}{c.name.split(" ")[1]?.[0]}
                     </div>
-                    <div>
-                      <p className="text-[13px] font-medium group-hover:text-accent transition-colors">{c.name}</p>
-                      <p className="text-[11px] text-muted-light">{c.role} · AI: {c.aiComfort}</p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+                    <span className="text-[13px] font-medium group-hover:text-accent transition-colors">{c.name}</span>
+                  </div>
+                  <span className="text-[11px] text-muted-light">{c.role} · AI: {c.aiComfort}</span>
+                </Link>
+              );
+            })}
           </div>
 
           {/* Workflows */}
@@ -188,33 +186,33 @@ export default function DepartmentPage({ params }: { params: Promise<{ slug: str
           </div>
 
           {/* Two columns: Pain points + Cross-dept handoffs */}
-          <div className="grid grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-2 gap-8 mb-8">
             {/* Pain points */}
             <div>
-              <h3 className="text-[13px] font-semibold mb-3">Pain points</h3>
+              <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Pain points</h3>
               {allPainPoints.length > 0 ? (
-                <div className="p-4 rounded-xl border border-red-200 bg-red-50/30 space-y-1.5">
+                <div>
                   {allPainPoints.map((pp, i) => (
-                    <p key={i} className="text-[12px] text-red-800/70 flex gap-2">
+                    <div key={i} className="flex gap-2 py-2 border-b border-border last:border-0">
                       <AlertTriangle className="w-3 h-3 text-red-400 shrink-0 mt-0.5" strokeWidth={1.5} />
-                      {pp}
-                    </p>
+                      <span className="text-[12px] text-muted">{pp}</span>
+                    </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-[12px] text-muted-light p-4 border border-dashed border-border rounded-xl text-center">No pain points captured yet</p>
+                <p className="text-[12px] text-muted-light py-4 text-center">No pain points captured yet</p>
               )}
             </div>
 
             {/* Cross-dept handoffs */}
             <div>
-              <h3 className="text-[13px] font-semibold mb-3">Cross-team handoffs</h3>
+              <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Cross-team handoffs</h3>
               {crossDeptFlows.length > 0 ? (
-                <div className="space-y-2">
+                <div>
                   {crossDeptFlows.slice(0, 6).map((flow, i) => {
                     const otherCfg = DEPT_CONFIG[flow.otherDept] || DEFAULT_CONFIG;
                     return (
-                      <div key={i} className="flex items-center gap-2 p-3 rounded-xl border border-border text-[12px]">
+                      <div key={i} className="flex items-center gap-2 py-2.5 border-b border-border last:border-0 text-[12px]">
                         {flow.direction === "in" ? (
                           <>
                             <span className="w-4 h-4 rounded flex items-center justify-center" style={{ background: otherCfg.bg }}>
@@ -240,7 +238,7 @@ export default function DepartmentPage({ params }: { params: Promise<{ slug: str
                   })}
                 </div>
               ) : (
-                <p className="text-[12px] text-muted-light p-4 border border-dashed border-border rounded-xl text-center">No cross-team handoffs</p>
+                <p className="text-[12px] text-muted-light py-4 text-center">No cross-team handoffs</p>
               )}
             </div>
           </div>
@@ -248,12 +246,12 @@ export default function DepartmentPage({ params }: { params: Promise<{ slug: str
           {/* Shared steps */}
           {sharedSteps.length > 0 && (
             <div>
-              <h3 className="text-[13px] font-semibold mb-3">Shared steps with other departments</h3>
-              <div className="rounded-xl border border-border p-4 space-y-2">
+              <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Shared steps with other departments</h3>
+              <div>
                 {sharedSteps.map((ss, i) => {
                   const otherCfg = DEPT_CONFIG[ss.otherDept] || DEFAULT_CONFIG;
                   return (
-                    <div key={i} className="flex items-center gap-2 text-[12px]">
+                    <div key={i} className="flex items-center gap-2 py-2.5 border-b border-border last:border-0 text-[12px]">
                       <span className="font-medium">{ss.step}</span>
                       <span className="text-muted-light">also used in</span>
                       <Link href={`/intelligence/${ss.taskId}`} className="flex items-center gap-1 text-accent hover:text-accent-hover">
