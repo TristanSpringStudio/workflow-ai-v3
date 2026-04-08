@@ -92,7 +92,7 @@ function DeptChip({ dept }: { dept: string }) {
 
 function PersonChip({ name }: { name: string }) {
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-border text-[11px]">
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface border border-border text-[12px]">
       <User className="w-3 h-3 text-muted-light" strokeWidth={2} />{name}
     </span>
   );

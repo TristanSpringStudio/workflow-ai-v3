@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Sparkles, Eye, CheckCircle2 } from "lucide-react";
+import { Sparkles, Eye, CheckCircle2, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
 import { tasks, contributors } from "@/lib/mock-data";
@@ -16,6 +16,12 @@ const TOOL_DOMAINS: Record<string, string> = {
   "Slack": "slack.com", "Notion": "notion.so", "Jira": "atlassian.com", "Linear": "linear.app",
   "Figma": "figma.com", "GitHub": "github.com", "Zoom": "zoom.us", "QuickBooks": "quickbooks.intuit.com",
   "Canva": "canva.com", "Excel": "office.com", "Loom": "loom.com",
+};
+
+const DEPT_ICONS: Record<string, { Icon: typeof DollarSign; bg: string }> = {
+  Sales: { Icon: DollarSign, bg: "#22c55e" }, Marketing: { Icon: Megaphone, bg: "#a855f7" },
+  Finance: { Icon: TrendingUp, bg: "#3b52ce" }, Operations: { Icon: Wrench, bg: "#f59e0b" },
+  Engineering: { Icon: FlaskConical, bg: "#6366f1" }, Product: { Icon: PackageSearch, bg: "#ec4899" },
 };
 
 function getLogo(tool: string) {
@@ -30,7 +36,7 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
   const task = tasks.find((t) => t.id === id);
   if (!task) notFound();
 
-  const [tab, setTab] = useState<Tab>("map");
+  const [tab, setTab] = useState<Tab>("details");
   const [aiRecsOn, setAiRecsOn] = useState(false);
   const [selectedStep, setSelectedStep] = useState<TaskStep | null>(null);
 
@@ -75,71 +81,111 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
         {/* Tab content */}
         <div className="flex-1 flex min-h-0">
           {/* ─── Details Tab ─── */}
-          {tab === "details" && (
-            <div className="flex-1 overflow-y-auto scroll-thin px-6 py-6">
-              <div className="max-w-3xl">
-                <h2 className="text-xl font-semibold mb-2">{task.title}</h2>
-                <p className="text-[14px] text-muted mb-6">{task.description}</p>
+          {tab === "details" && (() => {
+            const deptIcon = DEPT_ICONS[task.department];
+            const DeptIcon = deptIcon?.Icon || Wrench;
+            const allShared = task.steps.flatMap((s) =>
+              (s.sharedWith || []).map((sw) => {
+                const swTask = tasks.find((t) => t.id === sw.taskId);
+                return { ...sw, dept: swTask?.department || "" };
+              })
+            );
+            // dedupe by taskId
+            const uniqueShared = allShared.filter((sw, i, arr) => arr.findIndex((x) => x.taskId === sw.taskId) === i);
 
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="p-3 rounded-xl bg-surface border border-border">
-                    <p className="text-[10px] text-muted-light uppercase tracking-widest mb-1">Frequency</p>
-                    <p className="text-[14px] font-medium">{task.frequency}</p>
-                  </div>
-                  <div className="p-3 rounded-xl bg-surface border border-border">
-                    <p className="text-[10px] text-muted-light uppercase tracking-widest mb-1">Time spent</p>
-                    <p className="text-[14px] font-medium">{task.timeSpent}</p>
-                  </div>
-                  <div className="p-3 rounded-xl bg-surface border border-border">
-                    <p className="text-[10px] text-muted-light uppercase tracking-widest mb-1">Department</p>
-                    <p className="text-[14px] font-medium">{task.department}</p>
-                  </div>
-                </div>
+            return (
+              <div className="flex-1 overflow-y-auto scroll-thin px-6 py-10">
+                <div className="max-w-2xl mx-auto">
 
-                {/* Contributors */}
-                <div className="mb-6">
-                  <p className="text-[11px] font-medium text-muted-light uppercase tracking-widest mb-3">Contributors</p>
-                  <div className="flex gap-3">
-                    {taskContribs.map((c) => (
-                      <div key={c.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface border border-border">
-                        <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center text-[10px] font-bold text-accent">{c.name.charAt(0)}{c.name.split(" ")[1]?.[0]}</div>
-                        <div>
-                          <p className="text-[12px] font-medium">{c.name}</p>
-                          <p className="text-[10px] text-muted-light">{c.role} · {c.department}</p>
-                        </div>
+                  {/* Title */}
+                  <h2 className="text-[22px] font-semibold tracking-tight mb-4">{task.title}</h2>
+
+                  {/* Description */}
+                  <p className="text-[14px] text-muted leading-relaxed mb-10">{task.description}</p>
+
+                  {/* Stats row */}
+                  <div className="border-t border-border" />
+                  <div className="grid grid-cols-3 py-6">
+                    <div>
+                      <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-1.5">Frequency</p>
+                      <p className="text-[15px] font-medium">{task.frequency}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-1.5">Time spent</p>
+                      <p className="text-[15px] font-medium">{task.timeSpent}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-1.5">Potential savings</p>
+                      <p className="text-[15px] font-medium">{rec ? rec.impact.timeSaved : "—"}</p>
+                    </div>
+                  </div>
+                  <div className="border-t border-border mb-10" />
+
+                  {/* Tools */}
+                  <div className="mb-6">
+                    <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Tools</h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {task.tools.map((tool) => {
+                        const logo = getLogo(tool);
+                        return (
+                          <span key={tool} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface border border-border text-[12px]">
+                            {logo && <Image src={logo} alt={tool} width={14} height={14} unoptimized />}
+                            {tool}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Department */}
+                  <div className="mb-6">
+                    <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Department</h3>
+                    <Link href={`/departments/${task.department.toLowerCase()}`} className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border hover:border-muted-light transition-colors">
+                      <div className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: deptIcon?.bg || "#6b7280" }}>
+                        <DeptIcon className="w-2.5 h-2.5 text-white" strokeWidth={2} />
                       </div>
-                    ))}
+                      <span className="text-[12px] group-hover:text-accent transition-colors">{task.department}</span>
+                    </Link>
                   </div>
-                </div>
 
-                {/* Tools */}
-                <div className="mb-6">
-                  <p className="text-[11px] font-medium text-muted-light uppercase tracking-widest mb-3">Tools</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {task.tools.map((tool) => {
-                      const logo = getLogo(tool);
-                      return (
-                        <span key={tool} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface border border-border text-[12px]">
-                          {logo && <Image src={logo} alt={tool} width={14} height={14} unoptimized />}
-                          {tool}
+                  {/* Contributors */}
+                  <div className="mb-6">
+                    <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Contributors</h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {taskContribs.map((c) => (
+                        <span key={c.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface border border-border text-[12px]">
+                          <svg className="w-3 h-3 text-muted-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" /></svg>
+                          {c.name}
                         </span>
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                {/* Pain points */}
-                {task.painPoints.length > 0 && (
-                  <div className="p-4 rounded-xl bg-red-50/50 border border-red-200/50">
-                    <p className="text-[11px] font-medium text-red-600 uppercase tracking-widest mb-2">Pain Points</p>
-                    {task.painPoints.map((pp, i) => (
-                      <p key={i} className="text-[12px] text-red-800/70 mb-0.5">- {pp}</p>
-                    ))}
-                  </div>
-                )}
+                  {/* Shared workflows */}
+                  {uniqueShared.length > 0 && (
+                    <div className="mb-6">
+                      <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Shared with</h3>
+                      <div className="flex flex-wrap gap-1.5">
+                        {uniqueShared.map((sw) => {
+                          const swDeptIcon = DEPT_ICONS[sw.dept];
+                          const SwIcon = swDeptIcon?.Icon || Wrench;
+                          return (
+                            <Link key={sw.taskId} href={`/intelligence/${sw.taskId}`} className="group flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border hover:border-muted-light transition-colors">
+                              <div className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: swDeptIcon?.bg || "#6b7280" }}>
+                                <SwIcon className="w-2.5 h-2.5 text-white" strokeWidth={2} />
+                              </div>
+                              <span className="text-[12px] group-hover:text-accent transition-colors">{sw.taskTitle}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* ─── Map Tab ─── */}
           {tab === "map" && (
@@ -261,13 +307,20 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
                   {selectedStep.sharedWith && selectedStep.sharedWith.length > 0 && (
                     <div className="mb-5">
                       <p className="text-[11px] font-semibold text-foreground mb-2">Shared step</p>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedStep.sharedWith.map((sw) => (
-                          <Link key={sw.taskId} href={`/intelligence/${sw.taskId}`} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface border border-border text-[12px] hover:border-accent/30 transition-colors">
-                            <svg className="w-3 h-3 text-muted-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" /></svg>
-                            {sw.taskTitle}
-                          </Link>
-                        ))}
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedStep.sharedWith.map((sw) => {
+                          const swTask = tasks.find((t) => t.id === sw.taskId);
+                          const deptIcon = swTask ? DEPT_ICONS[swTask.department] : null;
+                          const SwIcon = deptIcon?.Icon || Wrench;
+                          return (
+                            <Link key={sw.taskId} href={`/intelligence/${sw.taskId}`} className="group flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border hover:border-muted-light transition-colors">
+                              <div className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: deptIcon?.bg || "#6b7280" }}>
+                                <SwIcon className="w-2.5 h-2.5 text-white" strokeWidth={2} />
+                              </div>
+                              <span className="text-[12px] group-hover:text-accent transition-colors">{sw.taskTitle}</span>
+                            </Link>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -296,39 +349,46 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
 
           {/* ─── Knowledge Tab ─── */}
           {tab === "knowledge" && (
-            <div className="flex-1 overflow-y-auto scroll-thin px-6 py-6">
-              <div className="max-w-3xl">
-                <h2 className="text-[16px] font-semibold mb-1">Knowledge</h2>
-                <p className="text-[13px] text-muted mb-6">How this workflow was documented, with citations from employee interviews.</p>
+            <div className="flex-1 overflow-y-auto scroll-thin px-6 py-10">
+              <div className="max-w-2xl mx-auto">
+                <h2 className="text-[22px] font-semibold tracking-tight mb-4">Knowledge</h2>
+                <p className="text-[14px] text-muted leading-relaxed mb-10">How this workflow was documented, with citations from employee interviews.</p>
 
                 {task.knowledge.length === 0 ? (
                   <p className="text-[13px] text-muted-light py-8 text-center">No interview citations yet.</p>
                 ) : (
-                  <div>
+                  <>
+                    <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Interview citations</h3>
                     {task.knowledge.map((k, i) => {
                       const c = contributors.find((x) => x.id === k.contributorId);
                       return (
                         <div key={i} className="py-4 border-b border-border last:border-0">
-                          <p className="text-[13px] italic leading-relaxed">&ldquo;{k.quote}&rdquo;</p>
-                          <div className="mt-2 flex items-center gap-2 text-[11px] text-muted">
-                            {c && (<><span className="font-medium text-foreground">{c.name}</span><span>· {c.role}</span></>)}
-                            <span>· {k.interviewDate}</span>
+                          <p className="text-[13px] italic leading-relaxed text-muted">&ldquo;{k.quote}&rdquo;</p>
+                          <div className="mt-2.5 flex items-center gap-2">
+                            {c && (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface border border-border text-[12px]">
+                                <svg className="w-3 h-3 text-muted-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" /></svg>
+                                {c.name}
+                              </span>
+                            )}
+                            <span className="text-[11px] text-muted-light">{k.interviewDate}</span>
                           </div>
                         </div>
                       );
                     })}
-                  </div>
+                  </>
                 )}
 
                 {/* Documented by */}
                 {(() => {
                   const addedBy = contributors.find((c) => c.id === task.addedBy);
                   return addedBy ? (
-                    <div className="mt-8 pt-4 border-t border-border">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[12px] text-muted">Documented by</span>
-                        <span className="text-[12px] font-medium">{addedBy.name} · {addedBy.role}</span>
-                      </div>
+                    <div className="mt-10">
+                      <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Documented by</h3>
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface border border-border text-[12px]">
+                        <svg className="w-3 h-3 text-muted-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" /></svg>
+                        {addedBy.name}
+                      </span>
                     </div>
                   ) : null;
                 })()}
@@ -338,42 +398,52 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
 
           {/* ─── Dependencies Tab ─── */}
           {tab === "dependencies" && (
-            <div className="flex-1 overflow-y-auto scroll-thin px-6 py-6">
-              <div className="max-w-3xl">
-                <h2 className="text-[16px] font-semibold mb-1">Dependencies</h2>
-                <p className="text-[13px] text-muted mb-6">What this workflow depends on and what depends on it.</p>
+            <div className="flex-1 overflow-y-auto scroll-thin px-6 py-10">
+              <div className="max-w-2xl mx-auto">
+                <h2 className="text-[22px] font-semibold tracking-tight mb-4">Dependencies</h2>
+                <p className="text-[14px] text-muted leading-relaxed mb-10">What this workflow depends on and what depends on it.</p>
 
-                <div className="grid grid-cols-2 gap-8">
+                <div className="grid grid-cols-2 gap-8 mb-10">
                   <div>
-                    <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Inputs</p>
+                    <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Inputs</h3>
                     {task.inputs.map((io, i) => (
                       <div key={i} className="flex items-center justify-between py-2.5 border-b border-border last:border-0">
                         <span className="text-[12px] font-medium">{io.what}</span>
-                        <span className="text-[11px] text-muted">{io.fromOrTo} · {io.method}</span>
+                        <span className="text-[11px] text-muted-light">{io.fromOrTo} · {io.method}</span>
                       </div>
                     ))}
                   </div>
                   <div>
-                    <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Outputs</p>
+                    <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Outputs</h3>
                     {task.outputs.map((io, i) => (
                       <div key={i} className="flex items-center justify-between py-2.5 border-b border-border last:border-0">
                         <span className="text-[12px] font-medium">{io.what}</span>
-                        <span className="text-[11px] text-muted">{io.fromOrTo} · {io.method}</span>
+                        <span className="text-[11px] text-muted-light">{io.fromOrTo} · {io.method}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {task.steps.some((s) => s.sharedWith && s.sharedWith.length > 0) && (
-                  <div className="mt-8">
-                    <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Shared steps</p>
+                  <div>
+                    <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Shared steps</h3>
                     {task.steps.filter((s) => s.sharedWith && s.sharedWith.length > 0).map((s, i) => (
                       <div key={i} className="flex items-center justify-between py-2.5 border-b border-border last:border-0">
                         <span className="text-[12px] font-medium">{s.title}</span>
-                        <div className="flex gap-2">
-                          {s.sharedWith!.map((sw) => (
-                            <Link key={sw.taskId} href={`/intelligence/${sw.taskId}`} className="text-[11px] text-accent hover:text-accent-hover">{sw.taskTitle}</Link>
-                          ))}
+                        <div className="flex flex-wrap gap-1.5">
+                          {s.sharedWith!.map((sw) => {
+                            const swTask = tasks.find((t) => t.id === sw.taskId);
+                            const deptIcon = swTask ? DEPT_ICONS[swTask.department] : null;
+                            const SwIcon = deptIcon?.Icon || Wrench;
+                            return (
+                              <Link key={sw.taskId} href={`/intelligence/${sw.taskId}`} className="group flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border hover:border-muted-light transition-colors">
+                                <div className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: deptIcon?.bg || "#6b7280" }}>
+                                  <SwIcon className="w-2.5 h-2.5 text-white" strokeWidth={2} />
+                                </div>
+                                <span className="text-[12px] group-hover:text-accent transition-colors">{sw.taskTitle}</span>
+                              </Link>
+                            );
+                          })}
                         </div>
                       </div>
                     ))}
@@ -385,26 +455,34 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
 
           {/* ─── Assessment Tab ─── */}
           {tab === "assessment" && (
-            <div className="flex-1 overflow-y-auto scroll-thin px-6 py-6">
-              <div className="max-w-3xl">
-                <h2 className="text-[16px] font-semibold mb-1">Our Assessment</h2>
-                <p className="text-[13px] text-muted mb-6">Analysis and recommendations for this workflow.</p>
+            <div className="flex-1 overflow-y-auto scroll-thin px-6 py-10">
+              <div className="max-w-2xl mx-auto">
+                <h2 className="text-[22px] font-semibold tracking-tight mb-4">Our Assessment</h2>
 
                 {rec ? (
                   <div>
-                    <p className="text-[14px] text-muted leading-relaxed mb-6">{rec.summary}</p>
+                    <p className="text-[14px] text-muted leading-relaxed mb-10">{rec.summary}</p>
 
-                    {/* Impact metrics as data rows */}
-                    <div className="mb-8">
-                      <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Impact</p>
-                      <div className="flex items-center justify-between py-2.5 border-b border-border">
-                        <span className="text-[12px] text-muted">Time saved</span>
-                        <span className="text-[12px] font-semibold text-green-600">{rec.impact.timeSaved}</span>
+                    {/* Impact stats row */}
+                    <div className="border-t border-border" />
+                    <div className="grid grid-cols-3 py-6">
+                      <div>
+                        <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-1.5">Time saved</p>
+                        <p className="text-[15px] font-medium text-green-600">{rec.impact.timeSaved}</p>
                       </div>
-                      <div className="flex items-center justify-between py-2.5 border-b border-border">
-                        <span className="text-[12px] text-muted">Cost saved</span>
-                        <span className="text-[12px] font-semibold text-green-600">{rec.impact.costSaved}</span>
+                      <div>
+                        <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-1.5">Cost saved</p>
+                        <p className="text-[15px] font-medium text-green-600">{rec.impact.costSaved}</p>
                       </div>
+                      <div>
+                        <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-1.5">Difficulty</p>
+                        <p className="text-[15px] font-medium capitalize">{rec.difficulty}</p>
+                      </div>
+                    </div>
+                    <div className="border-t border-border mb-10" />
+
+                    {/* Additional metrics */}
+                    <div className="mb-10">
                       <div className="flex items-center justify-between py-2.5 border-b border-border">
                         <span className="text-[12px] text-muted">Quality improvement</span>
                         <span className="text-[12px] font-medium">{rec.impact.qualityGain}</span>
@@ -413,15 +491,6 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
                         <span className="text-[12px] text-muted">Priority</span>
                         <span className="text-[12px] font-medium capitalize">{rec.priority}</span>
                       </div>
-                      <div className="flex items-center justify-between py-2.5 border-b border-border">
-                        <span className="text-[12px] text-muted">Difficulty</span>
-                        <span className="text-[12px] font-medium capitalize">{rec.difficulty}</span>
-                      </div>
-                    </div>
-
-                    {/* Steps comparison */}
-                    <div className="mb-8">
-                      <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Workflow comparison</p>
                       <div className="flex items-center justify-between py-2.5 border-b border-border">
                         <span className="text-[12px] text-muted">Current steps</span>
                         <span className="text-[12px] font-medium">{task.steps.length} ({task.steps.filter((s) => s.actor === "human").length} human)</span>
@@ -432,24 +501,24 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
                       </div>
                     </div>
 
-                    {/* AI handles / You decide as two column lists */}
-                    <div className="grid grid-cols-2 gap-8 mb-8">
+                    {/* AI handles / You decide */}
+                    <div className="grid grid-cols-2 gap-8 mb-10">
                       <div>
-                        <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">AI handles</p>
+                        <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">AI handles</h3>
                         {rec.aiHandles.map((r, i) => (
-                          <div key={i} className="py-1.5 text-[12px] text-muted border-b border-border last:border-0">{r}</div>
+                          <div key={i} className="py-2 text-[12px] text-muted border-b border-border last:border-0">{r}</div>
                         ))}
                       </div>
                       <div>
-                        <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">You decide</p>
+                        <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">You decide</h3>
                         {rec.humanDecides.map((r, i) => (
-                          <div key={i} className="py-1.5 text-[12px] text-muted border-b border-border last:border-0">{r}</div>
+                          <div key={i} className="py-2 text-[12px] text-muted border-b border-border last:border-0">{r}</div>
                         ))}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <button onClick={() => setTab("map")} className="px-4 py-2 rounded-xl bg-accent text-white text-[13px] font-medium hover:bg-accent-hover transition-colors">View on map →</button>
+                      <button onClick={() => setTab("map")} className="px-4 py-2 rounded-xl bg-accent text-white text-[13px] font-medium hover:bg-accent-hover transition-colors">View on map</button>
                       <Link href="/roadmap" className="px-4 py-2 rounded-xl border border-border text-[13px] font-medium text-muted hover:text-foreground transition-colors">See implementation plan</Link>
                     </div>
                   </div>
@@ -462,34 +531,32 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
 
           {/* ─── Implementation Tab ─── */}
           {tab === "implementation" && rec?.implementation && (
-            <div className="flex-1 overflow-y-auto scroll-thin px-6 py-6">
-              <div className="max-w-3xl">
-                <h2 className="text-[16px] font-semibold mb-1">Implementation Guide</h2>
-                <p className="text-[13px] text-muted mb-6">{rec.summary}</p>
+            <div className="flex-1 overflow-y-auto scroll-thin px-6 py-10">
+              <div className="max-w-2xl mx-auto">
+                <h2 className="text-[22px] font-semibold tracking-tight mb-4">Implementation Guide</h2>
+                <p className="text-[14px] text-muted leading-relaxed mb-10">{rec.summary}</p>
 
-                {/* Overview metrics */}
-                <div className="mb-8">
-                  <div className="flex items-center justify-between py-2.5 border-b border-border">
-                    <span className="text-[12px] text-muted">Time saved</span>
-                    <span className="text-[12px] font-semibold text-green-600">{rec.impact.timeSaved}</span>
+                {/* Overview stats row */}
+                <div className="border-t border-border" />
+                <div className="grid grid-cols-3 py-6">
+                  <div>
+                    <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-1.5">Time saved</p>
+                    <p className="text-[15px] font-medium text-green-600">{rec.impact.timeSaved}</p>
                   </div>
-                  <div className="flex items-center justify-between py-2.5 border-b border-border">
-                    <span className="text-[12px] text-muted">Cost saved</span>
-                    <span className="text-[12px] font-semibold text-green-600">{rec.impact.costSaved}</span>
+                  <div>
+                    <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-1.5">Difficulty</p>
+                    <p className="text-[15px] font-medium capitalize">{rec.difficulty}</p>
                   </div>
-                  <div className="flex items-center justify-between py-2.5 border-b border-border">
-                    <span className="text-[12px] text-muted">Difficulty</span>
-                    <span className="text-[12px] font-medium capitalize">{rec.difficulty}</span>
-                  </div>
-                  <div className="flex items-center justify-between py-2.5 border-b border-border">
-                    <span className="text-[12px] text-muted">Estimated time</span>
-                    <span className="text-[12px] font-medium">{rec.implementation.estimatedTime}</span>
+                  <div>
+                    <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-1.5">Timeline</p>
+                    <p className="text-[15px] font-medium">{rec.implementation.estimatedTime}</p>
                   </div>
                 </div>
+                <div className="border-t border-border mb-10" />
 
                 {/* Prerequisites */}
-                <div className="mb-8">
-                  <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Prerequisites</p>
+                <div className="mb-10">
+                  <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Prerequisites</h3>
                   {rec.implementation.prerequisites.map((p, i) => (
                     <div key={i} className="flex gap-3 py-2.5 border-b border-border last:border-0">
                       <span className="text-[11px] text-muted-light shrink-0 w-4 text-right">{i + 1}</span>
@@ -499,8 +566,8 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
                 </div>
 
                 {/* Steps */}
-                <div className="mb-8">
-                  <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Steps</p>
+                <div className="mb-10">
+                  <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Steps</h3>
                   {rec.implementation.steps.map((step, i) => {
                     const owner = step.owner ? contributors.find((c) => c.id === step.owner) : null;
                     return (
@@ -514,9 +581,14 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
                             </div>
                             <p className="text-[11px] text-muted mt-0.5">{step.description}</p>
                             {(owner || step.tools) && (
-                              <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-light">
-                                {owner && <span>Owner: {owner.name.split(" ")[0]}</span>}
-                                {step.tools && <span>{step.tools.join(", ")}</span>}
+                              <div className="flex items-center gap-2 mt-1.5">
+                                {owner && (
+                                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-surface border border-border text-[11px]">
+                                    <svg className="w-3 h-3 text-muted-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" /></svg>
+                                    {owner.name}
+                                  </span>
+                                )}
+                                {step.tools && <span className="text-[10px] text-muted-light">{step.tools.join(", ")}</span>}
                               </div>
                             )}
                           </div>
@@ -527,8 +599,8 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
                 </div>
 
                 {/* Success criteria */}
-                <div className="mb-8">
-                  <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Success criteria</p>
+                <div className="mb-10">
+                  <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Success criteria</h3>
                   {rec.implementation.successCriteria.map((c, i) => (
                     <div key={i} className="flex gap-3 py-2 border-b border-border last:border-0">
                       <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0 mt-0.5" strokeWidth={1.5} />
@@ -539,7 +611,7 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
 
                 {/* Rollback */}
                 <div>
-                  <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-2">Rollback plan</p>
+                  <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-2">Rollback plan</h3>
                   <p className="text-[12px] text-muted leading-relaxed">{rec.implementation.rollbackPlan}</p>
                 </div>
               </div>

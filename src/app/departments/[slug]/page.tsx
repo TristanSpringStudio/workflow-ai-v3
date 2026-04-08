@@ -139,12 +139,10 @@ export default function DepartmentPage({ params }: { params: Promise<{ slug: str
                   href={iv ? `/interviews/${iv.id}` : "/interviews"}
                   className="group flex items-center justify-between py-2.5 border-b border-border last:border-0 hover:bg-surface/50 -mx-2 px-2 rounded-lg transition-colors"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ background: cfg.bg }}>
-                      {c.name.charAt(0)}{c.name.split(" ")[1]?.[0]}
-                    </div>
-                    <span className="text-[13px] font-medium group-hover:text-accent transition-colors">{c.name}</span>
-                  </div>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface border border-border text-[12px] group-hover:border-accent/30 transition-colors">
+                    <svg className="w-3 h-3 text-muted-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" /></svg>
+                    {c.name}
+                  </span>
                   <span className="text-[11px] text-muted-light">{c.role} · AI: {c.aiComfort}</span>
                 </Link>
               );
@@ -254,11 +252,11 @@ export default function DepartmentPage({ params }: { params: Promise<{ slug: str
                     <div key={i} className="flex items-center gap-2 py-2.5 border-b border-border last:border-0 text-[12px]">
                       <span className="font-medium">{ss.step}</span>
                       <span className="text-muted-light">also used in</span>
-                      <Link href={`/intelligence/${ss.taskId}`} className="flex items-center gap-1 text-accent hover:text-accent-hover">
-                        <span className="w-3.5 h-3.5 rounded flex items-center justify-center" style={{ background: otherCfg.bg }}>
-                          <otherCfg.Icon className="w-2 h-2 text-white" strokeWidth={2} />
-                        </span>
-                        {ss.otherWorkflow}
+                      <Link href={`/intelligence/${ss.taskId}`} className="group flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border hover:border-muted-light transition-colors">
+                        <div className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: otherCfg.bg }}>
+                          <otherCfg.Icon className="w-2.5 h-2.5 text-white" strokeWidth={2} />
+                        </div>
+                        <span className="group-hover:text-accent transition-colors">{ss.otherWorkflow}</span>
                       </Link>
                     </div>
                   );

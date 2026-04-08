@@ -283,9 +283,9 @@ export default function IntelligencePage() {
 
                   <div className="flex items-center gap-1.5">
                     {taskContribs.slice(0, 2).map((c) => (
-                      <span key={c.id} className="flex items-center gap-1 text-[12px] text-muted">
+                      <span key={c.id} className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-surface border border-border text-[11px]">
                         <svg className="w-3 h-3 text-muted-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" /></svg>
-                        {c.name.split(" ")[0]} {c.name.split(" ")[1]?.[0]}.
+                        {c.name.split(" ")[0]}
                       </span>
                     ))}
                   </div>

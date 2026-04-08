@@ -221,13 +221,11 @@ export default function InterviewsPage() {
                   className="grid grid-cols-[1fr_140px_100px_100px_100px] gap-4 px-6 py-3.5 border-b border-border hover:bg-surface/50 transition-colors items-center"
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ background: deptColor }}>
-                      {person.name.charAt(0)}{person.name.split(" ")[1]?.[0]}
-                    </div>
-                    <div>
-                      <p className="text-[13px] font-medium">{person.name}</p>
-                      <p className="text-[11px] text-muted-light">{person.role}</p>
-                    </div>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface border border-border text-[12px]">
+                      <svg className="w-3 h-3 text-muted-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" /></svg>
+                      {person.name}
+                    </span>
+                    <span className="text-[11px] text-muted-light">{person.role}</span>
                   </div>
 
                   <div className="flex items-center gap-1.5">

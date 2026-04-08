@@ -89,14 +89,14 @@ export default function ImplementationTray({ task, actionLabel, onClose }: Imple
                           </div>
                           <p className="text-[11px] text-muted mt-0.5">{step.description}</p>
                           {(owner || step.tools) && (
-                            <div className="flex items-center gap-3 mt-1.5 text-[10px] text-muted-light">
+                            <div className="flex items-center gap-2 mt-1.5">
                               {owner && (
-                                <span className="flex items-center gap-1">
-                                  <User className="w-3 h-3" strokeWidth={1.5} />
-                                  {owner.name.split(" ")[0]}
+                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-surface border border-border text-[11px]">
+                                  <User className="w-3 h-3 text-muted-light" strokeWidth={1.5} />
+                                  {owner.name}
                                 </span>
                               )}
-                              {step.tools && <span>{step.tools.join(", ")}</span>}
+                              {step.tools && <span className="text-[10px] text-muted-light">{step.tools.join(", ")}</span>}
                             </div>
                           )}
                         </div>
