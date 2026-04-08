@@ -138,12 +138,12 @@ export default function InterviewsPage() {
                 <div>
                   <Link
                     href="/interview/zippy-zaps-abc123"
+                    target="_blank"
                     className="flex items-center justify-center gap-2 w-full h-10 rounded-xl border border-border text-[13px] font-medium hover:border-muted-light transition-colors"
                   >
                     Start an interview now
                     <ArrowRight className="w-3.5 h-3.5" strokeWidth={2} />
                   </Link>
-                  <p className="text-[11px] text-muted-light text-center mt-2">Opens the interview in a new page — about 10 minutes</p>
                 </div>
               </div>
             </div>
