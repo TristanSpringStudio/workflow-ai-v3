@@ -26,7 +26,7 @@ const NAV_ITEMS = [
   { label: "Company Intelligence", href: "/intelligence", Icon: Radio },
   { label: "Interviews", href: "/interviews", Icon: MessageSquare },
   { label: "Implementation Plan", href: "/roadmap", Icon: ClipboardList },
-  { label: "AI Assistant", href: "/assess", Icon: Sparkles },
+  { label: "AI Assistant", href: "/ai-assistant", Icon: Sparkles },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {

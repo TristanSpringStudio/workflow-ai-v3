@@ -62,7 +62,7 @@ export default function InterviewsPage() {
   if (sortBy === "dept") displayList.sort((a, b) => (a.person?.department || "").localeCompare(b.person?.department || ""));
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText("/i/zippy-zaps-abc123");
+    navigator.clipboard.writeText("/interview/zippy-zaps-abc123");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -88,7 +88,7 @@ export default function InterviewsPage() {
               <div className="flex gap-2 mb-3">
                 <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-background border border-border text-[13px] text-muted">
                   <Link2 className="w-3.5 h-3.5 text-muted-light shrink-0" strokeWidth={1.5} />
-                  <span className="truncate">/i/zippy-zaps-abc123</span>
+                  <span className="truncate">/interview/zippy-zaps-abc123</span>
                 </div>
                 <button onClick={handleCopyLink} className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-[12px] font-medium hover:border-muted-light transition-colors">
                   {copied ? <Check className="w-3.5 h-3.5 text-green-600" strokeWidth={2} /> : <Copy className="w-3.5 h-3.5" strokeWidth={1.5} />}
