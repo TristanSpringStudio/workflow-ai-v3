@@ -177,16 +177,6 @@ export default function RoadmapPage() {
             </div>
           </div>
 
-          {/* Framework reference */}
-          <div className="mt-8 p-5 rounded-2xl bg-surface border border-border">
-            <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">About this framework</p>
-            <p className="text-[12px] text-muted leading-relaxed">
-              This roadmap is based on the AI Transformation Model — a 4-level framework for becoming AI-native.
-              Levels build on each other and companies operate at multiple levels simultaneously. The goal isn&apos;t
-              to skip ahead — it&apos;s to move each workflow to its optimal level while building the foundation
-              for the next.
-            </p>
-          </div>
         </div>
       </div>
 

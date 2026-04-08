@@ -92,9 +92,9 @@ function AiAssistantContent() {
       {/* Breadcrumb header with chat history dropdown */}
       <div className="shrink-0 h-14 border-b border-border px-6 flex items-center">
         <div className="flex items-center gap-2 text-[14px]">
-          <a href="/dashboard" className="flex items-center gap-1.5 text-muted hover:text-foreground transition-colors">
-            <Home className="w-4 h-4" strokeWidth={1.5} />
-            <span>Home</span>
+          <a href="/ai-assistant" className="flex items-center gap-1.5 text-muted hover:text-foreground transition-colors">
+            <Sparkles className="w-4 h-4" strokeWidth={1.5} />
+            <span>AI Assistant</span>
           </a>
           <span className="text-muted-light">/</span>
 
