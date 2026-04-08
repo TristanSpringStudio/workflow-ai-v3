@@ -93,7 +93,7 @@ export interface TaskRecommendation {
   newSteps: TaskStep[];
   aiHandles: string[];
   humanDecides: string[];
-  phase: 1 | 2 | 3;
+  phase: 1 | 2 | 3 | 4;
   implementation?: ImplementationGuide;
 }
 

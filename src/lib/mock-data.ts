@@ -699,21 +699,27 @@ export function getStats() {
 // ─── Roadmap ───
 export const roadmap: RoadmapPhase[] = [
   {
-    phase: 1, name: "Quick Wins", duration: "Weeks 1-2",
-    description: "High-impact, low-effort workflows. Immediate ROI and team confidence.",
+    phase: 1, name: "AI as a Thought Partner", duration: "This week",
+    description: "Individuals start using AI for writing, research, and analysis. Standalone tools, general models, user-driven. The goal is faster output and better decisions.",
     taskIds: tasks.filter((t) => t.recommendation?.phase === 1).map((t) => t.id),
-    milestones: ["All Phase 1 workflows piloted", "Baseline time savings measured", "Team feedback collected"],
+    milestones: ["Each team member has tried AI for at least one task", "Prompt templates shared for top use cases", "Baseline time savings measured"],
   },
   {
-    phase: 2, name: "Foundation", duration: "Month 1-2",
-    description: "Cross-department workflows and bottleneck elimination.",
+    phase: 2, name: "AI as an Assistant", duration: "Next week",
+    description: "AI embedded into daily workflows with company context. Task-specific, permission-aware, integrated into existing tools. Impact: measurable hours saved per employee per week.",
     taskIds: tasks.filter((t) => t.recommendation?.phase === 2).map((t) => t.id),
-    milestones: ["Sales→Ops handoff automated", "Cross-dept flows optimized", "AI tools integrated with stack"],
+    milestones: ["AI connected to company data sources", "Cross-department handoffs streamlined", "Hours saved per employee tracked"],
   },
   {
-    phase: 3, name: "Transformation", duration: "Quarter 1-2",
-    description: "Intelligence layer operational. Real-time dashboards, continuous optimization.",
+    phase: 3, name: "AI as Teammates", duration: "Next month",
+    description: "Agents handle recurring workflows with human checkpoints. Configurable, automated, cross-tool. 10-40% of recurring work reclaimed, operations scale without proportional headcount.",
     taskIds: tasks.filter((t) => t.recommendation?.phase === 3).map((t) => t.id),
-    milestones: ["Real-time financial dashboard live", "Company world model operational", "70%+ AI readiness org-wide"],
+    milestones: ["First autonomous agent deployed", "Real-time dashboards replace batch reports", "Team capacity freed for strategic work"],
+  },
+  {
+    phase: 4, name: "AI as the System", duration: "Next quarter",
+    description: "AI runs critical, complex workflows across the org. Multi-agent orchestration, proactive and self-improving. Higher revenue per employee, faster time-to-market.",
+    taskIds: tasks.filter((t) => t.recommendation?.phase === 4).map((t) => t.id),
+    milestones: ["Multi-agent workflows operational", "Company intelligence layer self-updating", "AI-native operating model established"],
   },
 ];

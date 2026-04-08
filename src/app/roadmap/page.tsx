@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Zap, PiggyBank, Clock, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, ClipboardList } from "lucide-react";
+import { Zap, PiggyBank, Clock, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, ClipboardList, Brain, Bot, Cpu, Sparkles } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
 import ImplementationTray from "@/components/ImplementationTray";
@@ -23,38 +23,34 @@ const ACTION_LABELS: Record<string, { label: string; dept: string }> = {
 };
 
 const DEPT_ICONS: Record<string, { Icon: typeof DollarSign; bg: string }> = {
-  Sales: { Icon: DollarSign, bg: "#22c55e" },
-  Marketing: { Icon: Megaphone, bg: "#a855f7" },
-  Finance: { Icon: TrendingUp, bg: "#3b52ce" },
-  Operations: { Icon: Wrench, bg: "#f59e0b" },
-  Engineering: { Icon: FlaskConical, bg: "#6366f1" },
-  Product: { Icon: PackageSearch, bg: "#ec4899" },
+  Sales: { Icon: DollarSign, bg: "#22c55e" }, Marketing: { Icon: Megaphone, bg: "#a855f7" },
+  Finance: { Icon: TrendingUp, bg: "#3b52ce" }, Operations: { Icon: Wrench, bg: "#f59e0b" },
+  Engineering: { Icon: FlaskConical, bg: "#6366f1" }, Product: { Icon: PackageSearch, bg: "#ec4899" },
 };
 
-const PHASE_DATA: Record<number, { title: string; timeline: string; iconBg: string; summary: string; savings: string; implTime: string }> = {
+const LEVEL_ICONS = [Brain, Sparkles, Bot, Cpu];
+const LEVEL_COLORS = ["#3b82f6", "#6366f1", "#8b5cf6", "#7c3aed"];
+
+const LEVEL_SUMMARIES: Record<number, { summary: string; savings: string; implTime: string }> = {
   1: {
-    title: "Build the foundation",
-    timeline: "This week",
-    iconBg: "#2563eb",
-    summary: `Based on our interviews across ${company.name}, we've identified high-impact workflows that can be improved immediately with minimal disruption. Each phase builds on the previous one, moving from individual quick wins to cross-team optimization to full organizational transformation.`,
+    summary: `At this level, individuals at ${company.name} start using AI as a thinking tool — for writing, research, and analysis. This is the entry point. No integrations needed. People use standalone AI tools to draft content, brainstorm ideas, and analyze information faster. The goal is to build familiarity and confidence with AI before embedding it into processes.`,
     savings: "$75,200/yr",
     implTime: "2 hours",
   },
   2: {
-    title: "Cross-team optimization",
-    timeline: "Next week",
-    iconBg: "#6366f1",
-    summary: `Phase 2 tackles the handoffs — the moments where work crosses department boundaries at ${company.name}. Our interviews revealed that the biggest time sinks aren't within departments, they're between them. Information gets re-entered, context gets lost, and people wait for manual routing.`,
+    summary: `Level 2 moves from standalone AI to AI embedded in ${company.name}'s daily workflows. AI now has company context — it knows your brand voice, your data sources, your processes. This is where cross-department handoffs get streamlined and the real time savings compound.`,
     savings: "$15,600/yr",
     implTime: "4 hours",
   },
   3: {
-    title: "Transformation",
-    timeline: "Next month",
-    iconBg: "#7c3aed",
-    summary: `Building the intelligence infrastructure that makes ${company.name} a fundamentally different kind of organization. This is where individual workflow improvements compound into a system-wide advantage. Instead of batch reporting (monthly closes, weekly compilations), you move to continuous intelligence.`,
+    summary: `At this level, AI agents handle recurring workflows at ${company.name} with human checkpoints built in. The agents run automatically — pulling data, generating reports, routing information — while humans review and approve. 10-40% of recurring work gets reclaimed.`,
     savings: "$28,800/yr",
     implTime: "8 hours",
+  },
+  4: {
+    summary: `The final level: AI runs critical, complex workflows across ${company.name}. Multi-agent orchestration handles end-to-end processes that previously required multiple people and manual coordination. This is the intelligence-native operating model.`,
+    savings: "$50,000/yr",
+    implTime: "Ongoing",
   },
 };
 
@@ -68,12 +64,12 @@ export default function RoadmapPage() {
         <div className="max-w-3xl mx-auto px-8 py-8">
           {/* Intro */}
           <div className="mb-10">
-            <h2 className="text-xl font-semibold tracking-tight mb-3">Your Implementation Roadmap</h2>
+            <h2 className="text-xl font-semibold tracking-tight mb-3">AI Transformation Roadmap</h2>
             <p className="text-[14px] text-muted leading-relaxed">
-              Based on {tasks.filter((t) => t.knowledge.length > 0).length} employee interviews across {new Set(tasks.map((t) => t.department)).size} departments,
-              we&apos;ve built a phased plan to make {company.name} intelligence-native. Each phase builds
-              on the previous one, moving from individual quick wins to cross-team optimization to full
-              organizational transformation.
+              Based on our assessment of {company.name}, we&apos;ve mapped your workflows against the
+              AI Transformation Model — a 4-level framework for becoming AI-native. Each level builds
+              on the previous one. Companies operate at multiple levels simultaneously — the goal is to
+              move each workflow to its optimal level.
             </p>
           </div>
 
@@ -86,59 +82,73 @@ export default function RoadmapPage() {
               <div className="space-y-10">
                 {roadmap.map((phase, phaseIdx) => {
                   const phaseTasks = tasks.filter((t) => phase.taskIds.includes(t.id));
-                  const data = PHASE_DATA[phase.phase];
+                  const levelData = LEVEL_SUMMARIES[phase.phase];
+                  const LevelIcon = LEVEL_ICONS[phase.phase - 1] || Brain;
+                  const levelColor = LEVEL_COLORS[phase.phase - 1] || "#6b7280";
 
                   return (
                     <div key={phase.phase} className="relative pl-12">
                       {/* Timeline dot */}
-                      <div className="absolute left-0 top-0 w-8 h-8 rounded-lg flex items-center justify-center z-10" style={{ background: data?.iconBg || "#6b7280" }}>
-                        <ClipboardList className="w-4 h-4 text-white" strokeWidth={2} />
+                      <div className="absolute left-0 top-0 w-8 h-8 rounded-lg flex items-center justify-center z-10" style={{ background: levelColor }}>
+                        <LevelIcon className="w-4 h-4 text-white" strokeWidth={2} />
                       </div>
 
-                      {/* Phase header */}
+                      {/* Level header */}
                       <div className="flex items-center gap-3 mb-3">
-                        <h3 className="text-[16px] font-semibold">{data?.title || phase.name}</h3>
+                        <h3 className="text-[16px] font-semibold">
+                          <span className="text-muted-light">Level {phase.phase}:</span> {phase.name}
+                        </h3>
                         <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-surface border border-border text-muted">
-                          {data?.timeline || phase.duration}
+                          {phase.duration}
                         </span>
                       </div>
 
                       {/* Summary */}
                       <p className="text-[13px] text-muted leading-relaxed mb-6">
-                        {data?.summary || phase.description}
+                        {levelData?.summary || phase.description}
                       </p>
 
-                      {/* 2-column layout: labels left, values right */}
+                      {/* 2-column layout */}
                       <div className="space-y-4">
                         {/* Action items */}
-                        <div className="flex gap-6">
-                          <div className="w-44 shrink-0 flex items-start gap-2 pt-1">
-                            <Zap className="w-3.5 h-3.5 text-muted-light shrink-0 mt-0.5" strokeWidth={1.5} />
-                            <span className="text-[13px] text-muted">Action items</span>
+                        {phaseTasks.length > 0 && (
+                          <div className="flex gap-6">
+                            <div className="w-44 shrink-0 flex items-start gap-2 pt-1">
+                              <Zap className="w-3.5 h-3.5 text-muted-light shrink-0 mt-0.5" strokeWidth={1.5} />
+                              <span className="text-[13px] text-muted">Action items</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {phaseTasks.map((task) => {
+                                const action = ACTION_LABELS[task.id];
+                                const deptIcon = DEPT_ICONS[action?.dept || task.department];
+                                const IconComponent = deptIcon?.Icon || Wrench;
+                                const label = action?.label || task.title;
+                                return (
+                                  <button
+                                    key={task.id}
+                                    onClick={() => setTrayTask({ task, label })}
+                                    className="group flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border hover:border-muted-light transition-colors"
+                                  >
+                                    <div className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: deptIcon?.bg || "#6b7280" }}>
+                                      <IconComponent className="w-2.5 h-2.5 text-white" strokeWidth={2} />
+                                    </div>
+                                    <span className="text-[12px] group-hover:text-accent transition-colors">{label}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {phaseTasks.map((task) => {
-                              const action = ACTION_LABELS[task.id];
-                              const deptIcon = DEPT_ICONS[action?.dept || task.department];
-                              const IconComponent = deptIcon?.Icon || Wrench;
-                              const label = action?.label || task.title;
-                              return (
-                                <button
-                                  key={task.id}
-                                  onClick={() => setTrayTask({ task, label })}
-                                  className="group flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border hover:border-muted-light transition-colors"
-                                >
-                                  <div className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: deptIcon?.bg || "#6b7280" }}>
-                                    <IconComponent className="w-2.5 h-2.5 text-white" strokeWidth={2} />
-                                  </div>
-                                  <span className="text-[12px] group-hover:text-accent transition-colors">
-                                    {label}
-                                  </span>
-                                </button>
-                              );
-                            })}
+                        )}
+
+                        {phaseTasks.length === 0 && (
+                          <div className="flex gap-6">
+                            <div className="w-44 shrink-0 flex items-start gap-2 pt-1">
+                              <Zap className="w-3.5 h-3.5 text-muted-light shrink-0 mt-0.5" strokeWidth={1.5} />
+                              <span className="text-[13px] text-muted">Action items</span>
+                            </div>
+                            <span className="text-[12px] text-muted-light italic">More interviews needed to identify Level {phase.phase} opportunities</span>
                           </div>
-                        </div>
+                        )}
 
                         {/* Annual savings */}
                         <div className="flex gap-6">
@@ -146,39 +156,43 @@ export default function RoadmapPage() {
                             <PiggyBank className="w-3.5 h-3.5 text-muted-light shrink-0" strokeWidth={1.5} />
                             <span className="text-[13px] text-muted">Annual savings</span>
                           </div>
-                          <span className="text-[14px] font-semibold">{data?.savings}</span>
+                          <span className="text-[14px] font-semibold">{levelData?.savings || "TBD"}</span>
                         </div>
 
                         {/* Implementation time */}
                         <div className="flex gap-6">
                           <div className="w-44 shrink-0 flex items-center gap-2">
                             <Clock className="w-3.5 h-3.5 text-muted-light shrink-0" strokeWidth={1.5} />
-                            <span className="text-[13px] text-muted">Estimated implementation time</span>
+                            <span className="text-[13px] text-muted">Estimated time</span>
                           </div>
-                          <span className="text-[14px] font-semibold">{data?.implTime}</span>
+                          <span className="text-[14px] font-semibold">{levelData?.implTime || "TBD"}</span>
                         </div>
                       </div>
 
-                      {/* Divider between phases (not after last) */}
-                      {phaseIdx < roadmap.length - 1 && (
-                        <div className="mt-8" />
-                      )}
+                      {phaseIdx < roadmap.length - 1 && <div className="mt-8" />}
                     </div>
                   );
                 })}
               </div>
             </div>
           </div>
+
+          {/* Framework reference */}
+          <div className="mt-8 p-5 rounded-2xl bg-surface border border-border">
+            <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">About this framework</p>
+            <p className="text-[12px] text-muted leading-relaxed">
+              This roadmap is based on the AI Transformation Model — a 4-level framework for becoming AI-native.
+              Levels build on each other and companies operate at multiple levels simultaneously. The goal isn&apos;t
+              to skip ahead — it&apos;s to move each workflow to its optimal level while building the foundation
+              for the next.
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Implementation tray */}
       {trayTask && (
-        <ImplementationTray
-          task={trayTask.task}
-          actionLabel={trayTask.label}
-          onClose={() => setTrayTask(null)}
-        />
+        <ImplementationTray task={trayTask.task} actionLabel={trayTask.label} onClose={() => setTrayTask(null)} />
       )}
     </AppShell>
   );
