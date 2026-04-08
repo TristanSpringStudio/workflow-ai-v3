@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Check, Clock, Send, Copy, Link2, Plus, User, Search } from "lucide-react";
+import { Check, Clock, Send, Copy, Link2, Plus, User, Search, X, ArrowRight, Mail } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
 import { interviews, contributors, pendingContributors } from "@/lib/mock-data";
@@ -61,8 +61,10 @@ export default function InterviewsPage() {
   if (sortBy === "name") displayList.sort((a, b) => (a.person?.name || "").localeCompare(b.person?.name || ""));
   if (sortBy === "dept") displayList.sort((a, b) => (a.person?.department || "").localeCompare(b.person?.department || ""));
 
+  const fullLink = typeof window !== "undefined" ? `${window.location.origin}/interview/zippy-zaps-abc123` : "/interview/zippy-zaps-abc123";
+
   const handleCopyLink = () => {
-    navigator.clipboard.writeText("/interview/zippy-zaps-abc123");
+    navigator.clipboard.writeText(fullLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -72,35 +74,77 @@ export default function InterviewsPage() {
       <div className="flex-1 flex flex-col min-h-0">
         <PageHeader title="Interviews">
           <button
-            onClick={() => setShowInvite(!showInvite)}
+            onClick={() => setShowInvite(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent text-white text-[12px] font-medium hover:bg-accent-hover transition-colors"
           >
             <Plus className="w-3.5 h-3.5" strokeWidth={2} />
-            Invite employee
+            New interview
           </button>
         </PageHeader>
 
-        {/* Invite panel — collapsible below header */}
+        {/* New interview modal */}
         {showInvite && (
-          <div className="shrink-0 px-6 py-4 border-b border-border bg-accent/[0.02]">
-            <div className="max-w-3xl">
-              <p className="text-[12px] text-muted mb-3">Send this link to employees. They&apos;ll complete a 10-minute AI interview about their role, tasks, and workflows.</p>
-              <div className="flex gap-2 mb-3">
-                <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-background border border-border text-[13px] text-muted">
-                  <Link2 className="w-3.5 h-3.5 text-muted-light shrink-0" strokeWidth={1.5} />
-                  <span className="truncate">/interview/zippy-zaps-abc123</span>
-                </div>
-                <button onClick={handleCopyLink} className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-[12px] font-medium hover:border-muted-light transition-colors">
-                  {copied ? <Check className="w-3.5 h-3.5 text-green-600" strokeWidth={2} /> : <Copy className="w-3.5 h-3.5" strokeWidth={1.5} />}
-                  {copied ? "Copied" : "Copy"}
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6" onClick={() => setShowInvite(false)}>
+            <div className="absolute inset-0 bg-black/30" />
+            <div className="relative w-full max-w-md bg-background rounded-2xl border border-border shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+                <h2 className="text-[15px] font-semibold">New interview</h2>
+                <button onClick={() => setShowInvite(false)} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted hover:text-foreground hover:bg-surface transition-colors">
+                  <X className="w-4 h-4" strokeWidth={2} />
                 </button>
               </div>
-              <div className="flex gap-2">
-                <input placeholder="name@company.com" className="flex-1 h-8 px-3 rounded-lg bg-background border border-border text-[12px] placeholder:text-muted-light focus:outline-none focus:border-accent/40" />
-                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent text-white text-[12px] font-medium hover:bg-accent-hover transition-colors">
-                  <Send className="w-3 h-3" strokeWidth={2} />
-                  Send
-                </button>
+
+              <div className="p-6 space-y-5">
+                {/* Copy link */}
+                <div>
+                  <p className="text-[12px] font-medium mb-2">Share interview link</p>
+                  <div className="flex gap-2">
+                    <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl bg-surface border border-border text-[12px] text-muted overflow-hidden">
+                      <Link2 className="w-3.5 h-3.5 text-muted-light shrink-0" strokeWidth={1.5} />
+                      <span className="truncate">{fullLink}</span>
+                    </div>
+                    <button onClick={handleCopyLink} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-border text-[12px] font-medium hover:border-muted-light transition-colors shrink-0">
+                      {copied ? <Check className="w-3.5 h-3.5 text-green-600" strokeWidth={2} /> : <Copy className="w-3.5 h-3.5" strokeWidth={1.5} />}
+                      {copied ? "Copied" : "Copy"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-[11px] text-muted-light">or</span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
+
+                {/* Invite by email */}
+                <div>
+                  <p className="text-[12px] font-medium mb-2">Invite by email</p>
+                  <div className="flex gap-2">
+                    <input placeholder="name@company.com" className="flex-1 h-10 px-3 rounded-xl bg-surface border border-border text-[13px] placeholder:text-muted-light focus:outline-none focus:border-accent/40" />
+                    <button className="flex items-center gap-1.5 px-4 h-10 rounded-xl bg-accent text-white text-[12px] font-medium hover:bg-accent-hover transition-colors shrink-0">
+                      <Mail className="w-3.5 h-3.5" strokeWidth={2} />
+                      Send
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-[11px] text-muted-light">or</span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
+
+                {/* Start now */}
+                <div>
+                  <Link
+                    href="/interview/zippy-zaps-abc123"
+                    className="flex items-center justify-center gap-2 w-full h-10 rounded-xl border border-border text-[13px] font-medium hover:border-muted-light transition-colors"
+                  >
+                    Start an interview now
+                    <ArrowRight className="w-3.5 h-3.5" strokeWidth={2} />
+                  </Link>
+                  <p className="text-[11px] text-muted-light text-center mt-2">Opens the interview in a new page — about 10 minutes</p>
+                </div>
               </div>
             </div>
           </div>
