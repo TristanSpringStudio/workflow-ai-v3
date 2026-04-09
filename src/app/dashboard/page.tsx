@@ -272,12 +272,12 @@ export default function HomePage() {
                   <p className="text-[13px] text-muted-light">No recent activity yet.</p>
                 )}
                 {recentActivity.map((item, i) => (
-                  <div key={i} className="flex flex-col gap-1">
-                    <div className="flex items-center gap-1.5">
-                      <PersonChip name={item.person} />
-                      <span className="text-[13px]">{item.action}</span>
+                  <div key={i}>
+                    <div className="leading-relaxed">
+                      <span className="inline align-middle mr-1.5"><PersonChip name={item.person} /></span>
+                      <span className="text-[13px] align-middle">{item.action}</span>
                     </div>
-                    {item.time && <span className="text-[11px] text-muted-light">{item.time}</span>}
+                    {item.time && <span className="text-[11px] text-muted-light mt-1 block">{item.time}</span>}
                   </div>
                 ))}
               </div>
