@@ -3,7 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Radio, ClipboardList, Sparkles, Settings, ChevronRight, DollarSign, Megaphone, TrendingUp, Users, Share2, Headphones, Wrench, PackageSearch, FlaskConical, MessageSquare } from "lucide-react";
+import { Home, Radio, ClipboardList, Sparkles, Settings, ChevronRight, DollarSign, Megaphone, TrendingUp, Users, Share2, Headphones, Wrench, PackageSearch, FlaskConical, MessageSquare, LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { useCompanyData } from "@/lib/company-data";
 
 const DEPT_CONFIG: Record<string, { color: string; bg: string; Icon: typeof DollarSign }> = {
@@ -92,12 +94,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
 
-        {/* Settings */}
-        <div className="px-2 py-2 border-t border-border">
+        {/* Settings + Logout */}
+        <div className="px-2 py-2 border-t border-border space-y-0.5">
           <Link href="/settings" className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-[12px] text-muted hover:text-foreground hover:bg-foreground/[0.03] transition-colors">
             <Settings className="w-4 h-4" strokeWidth={1.5} />
             Settings
           </Link>
+          <button
+            onClick={async () => {
+              const supabase = createClient();
+              await supabase.auth.signOut();
+              window.location.href = "/login";
+            }}
+            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-[12px] text-muted hover:text-foreground hover:bg-foreground/[0.03] transition-colors"
+          >
+            <LogOut className="w-4 h-4" strokeWidth={1.5} />
+            Log out
+          </button>
         </div>
       </div>
 
