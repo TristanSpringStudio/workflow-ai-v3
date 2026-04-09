@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import {
   getCompany,
   getContributors,
@@ -6,7 +8,6 @@ import {
   getInterviews,
   getRoadmap,
   getAssessment,
-  getUserCompanyId,
 } from "@/lib/supabase/queries";
 
 /**
@@ -16,7 +17,23 @@ import {
  */
 export async function GET() {
   try {
-    const companyId = await getUserCompanyId();
+    // Get authenticated user
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    let companyId: string | null = null;
+
+    if (user) {
+      // Use admin client to bypass RLS for the user profile lookup
+      const admin = createAdminClient();
+      const { data: profile } = await admin
+        .from("users")
+        .select("company_id")
+        .eq("id", user.id)
+        .single();
+
+      companyId = profile?.company_id || null;
+    }
 
     const [company, contributors, workflows, interviews, roadmap, assessment] =
       await Promise.all([
