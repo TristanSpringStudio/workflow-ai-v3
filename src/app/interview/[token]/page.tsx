@@ -3,6 +3,7 @@
 import { use, useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Send, ArrowRight, Check, Building2, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, Users, Share2, Headphones } from "lucide-react";
+import MessageShimmer from "@/components/MessageShimmer";
 import { company } from "@/lib/mock-data";
 import type { ExtractedSoFar } from "@/lib/ai/schemas/interview-output";
 
@@ -518,18 +519,7 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
             </div>
           ))}
 
-          {isTyping && (
-            <div className="flex justify-start">
-              <div className="shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center mr-2.5">
-                <svg className="w-3.5 h-3.5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25" /></svg>
-              </div>
-              <div className="flex gap-1 pt-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-muted-light animate-pulse" />
-                <span className="w-1.5 h-1.5 rounded-full bg-muted-light animate-pulse" style={{ animationDelay: "0.2s" }} />
-                <span className="w-1.5 h-1.5 rounded-full bg-muted-light animate-pulse" style={{ animationDelay: "0.4s" }} />
-              </div>
-            </div>
-          )}
+          {isTyping && <MessageShimmer />}
         </div>
       </div>
 

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Sparkles, Send, ChevronDown, Check } from "lucide-react";
+import MessageShimmer from "@/components/MessageShimmer";
 import AppShell from "@/components/AppShell";
 
 interface ChatMsg { id: string; role: "assistant" | "user"; content: string; }
@@ -209,16 +210,7 @@ function AiAssistantContent() {
             ))}
 
             {isTyping && messages.length > 0 && messages[messages.length - 1]?.content === "" && (
-              <div className="flex justify-start">
-                <div className="shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center mr-2.5">
-                  <Sparkles className="w-3.5 h-3.5 text-accent" strokeWidth={2} />
-                </div>
-                <div className="flex gap-1 pt-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-muted-light animate-pulse" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-muted-light animate-pulse" style={{ animationDelay: "0.2s" }} />
-                  <span className="w-1.5 h-1.5 rounded-full bg-muted-light animate-pulse" style={{ animationDelay: "0.4s" }} />
-                </div>
-              </div>
+              <MessageShimmer />
             )}
           </div>
         </div>

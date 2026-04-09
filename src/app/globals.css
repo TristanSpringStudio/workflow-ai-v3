@@ -80,6 +80,25 @@ body {
   transform: translateX(-50%) scale(1);
 }
 
+/* Shimmer loading lines */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer-line {
+  background: linear-gradient(
+    90deg,
+    #e5e7eb 0%,
+    #f3f4f6 30%,
+    #e5e7eb 60%,
+    #f3f4f6 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  filter: blur(0.5px);
+}
+
 .chat-border {
   position: relative;
   box-shadow: 0 0 20px rgba(147, 197, 253, 0.1), 0 0 40px rgba(196, 181, 253, 0.05);
