@@ -1,5 +1,8 @@
 import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+
+// Force edge-compatible streaming (no buffering)
+export const maxDuration = 60;
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { getWorkflows, getContributors, getAssessment } from "@/lib/supabase/queries";
 import { loadPrompt } from "@/lib/ai/pipeline/prompt-loader";
@@ -104,8 +107,10 @@ export async function POST(request: NextRequest) {
     return new Response(readable, {
       headers: {
         "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
+        "Cache-Control": "no-cache, no-transform",
         Connection: "keep-alive",
+        "X-Accel-Buffering": "no",
+        "Transfer-Encoding": "chunked",
       },
     });
   } catch (error) {
