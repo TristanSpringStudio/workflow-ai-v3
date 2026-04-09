@@ -2,19 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Sparkles, Send, Home, ChevronDown, Check } from "lucide-react";
+import { Sparkles, Send, ChevronDown, Check } from "lucide-react";
 import AppShell from "@/components/AppShell";
 
 interface ChatMsg { id: string; role: "assistant" | "user"; content: string; }
-
-const MOCK_RESPONSES: Record<string, string> = {
-  "default": "Based on our intelligence layer, I can see several opportunities across your organization. The biggest quick win is automating the weekly performance report — Sarah spends 3 hours every Friday on something AI can do in minutes. Want me to dive deeper into any specific area?",
-  "sales": "Your sales team is spending about 2 hours per day on personalized outreach emails — that's 10 hours a week. AI can draft these in 2 minutes each while maintaining the personalization that gets replies. Marcus's reply rate could jump from 2% to 11% based on what we've seen in similar orgs.",
-  "appointments": "Looking at your data, the main bottleneck to booking more appointments is the manual outreach process. Marcus writes each email from scratch. If we set up AI-powered outreach, he could 5x his send volume without sacrificing personalization. The implementation takes about 1.5 hours.",
-  "p&l": "David spends 5 full days on month-end close. 95% of the transaction categorization is repetitive. With an AI-powered financial layer, the close could go from 5 days to 1 day. The estimated annual savings is $28,800. Want me to show you the implementation plan?",
-  "priya": "Priya Patel is a critical single point of failure. She's the sole contributor to 5 workflows in Operations — client onboarding, SOP documentation, status meetings, client health monitoring, and vendor management. None of these are documented. If she goes on vacation, they all stop. Priority recommendation: document her top 3 processes immediately.",
-  "bottleneck": "The biggest bottleneck is the Sales-to-Operations handoff. When a deal closes, it takes 14 days for onboarding to begin. The industry average is 3 days. The handoff involves email chains, manual Notion checklists, and hand-created Jira tickets. We can automate this to a 48-hour kickoff.",
-};
 
 function AiAssistantContent() {
   const searchParams = useSearchParams();
@@ -27,11 +18,6 @@ function AiAssistantContent() {
   const [chatHistoryOpen, setChatHistoryOpen] = useState(false);
   const [chatHistory] = useState([
     { id: "ch1", title: "New AI chat", date: "Today" },
-    { id: "ch2", title: "Sales automation opportunities", date: "Today" },
-    { id: "ch3", title: "Marketing report analysis", date: "Previous 7 days" },
-    { id: "ch4", title: "Onboarding bottleneck deep dive", date: "Previous 7 days" },
-    { id: "ch5", title: "Finance close process review", date: "Previous 30 days" },
-    { id: "ch6", title: "Cross-team data redundancy", date: "Previous 30 days" },
   ]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -50,21 +36,12 @@ function AiAssistantContent() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const getResponse = useCallback((q: string): string => {
-    const lower = q.toLowerCase();
-    if (lower.includes("sales") || lower.includes("call")) return MOCK_RESPONSES["sales"];
-    if (lower.includes("appointment") || lower.includes("book")) return MOCK_RESPONSES["appointments"];
-    if (lower.includes("p&l") || lower.includes("financial") || lower.includes("automat")) return MOCK_RESPONSES["p&l"];
-    if (lower.includes("priya") || lower.includes("single point") || lower.includes("failure")) return MOCK_RESPONSES["priya"];
-    if (lower.includes("bottleneck") || lower.includes("handoff") || lower.includes("onboard")) return MOCK_RESPONSES["bottleneck"];
-    return MOCK_RESPONSES["default"];
-  }, []);
-
-  const sendMessage = useCallback((text: string) => {
+  const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isTyping) return;
 
     const userMsg: ChatMsg = { id: Math.random().toString(36).slice(2, 8), role: "user", content: text };
-    setMessages((p) => [...p, userMsg]);
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
     setInput("");
 
     if (messages.length === 0) {
@@ -72,12 +49,75 @@ function AiAssistantContent() {
     }
 
     setIsTyping(true);
-    setTimeout(() => {
+
+    // Create a placeholder assistant message for streaming
+    const assistantId = Math.random().toString(36).slice(2, 8);
+    setMessages((prev) => [...prev, { id: assistantId, role: "assistant", content: "" }]);
+
+    try {
+      const res = await fetch("/api/assistant/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: newMessages.map((m) => ({ role: m.role, content: m.content })),
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`API error: ${res.status}`);
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No reader");
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // Process SSE events
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const data = line.slice(6);
+          if (data === "[DONE]") break;
+
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.text) {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantId
+                    ? { ...m, content: m.content + parsed.text }
+                    : m
+                )
+              );
+            }
+          } catch {
+            // Skip malformed JSON
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Chat error:", error);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId
+            ? { ...m, content: "Sorry, I encountered an error. Please try again." }
+            : m
+        )
+      );
+    } finally {
       setIsTyping(false);
-      setMessages((p) => [...p, { id: Math.random().toString(36).slice(2, 8), role: "assistant", content: getResponse(text) }]);
       setTimeout(() => inputRef.current?.focus(), 100);
-    }, 1500);
-  }, [isTyping, messages.length, getResponse]);
+    }
+  }, [isTyping, messages]);
 
   // Auto-send initial query from homepage
   useEffect(() => {
@@ -159,12 +199,16 @@ function AiAssistantContent() {
                   </div>
                 )}
                 <div className={`max-w-[80%] ${msg.role === "user" ? "px-4 py-2.5 rounded-2xl rounded-br-md bg-accent text-white text-[14px]" : "text-[14px] leading-relaxed text-muted"}`}>
-                  {msg.content}
+                  {msg.role === "assistant" ? (
+                    <div className="whitespace-pre-wrap">{msg.content}{isTyping && messages[messages.length - 1]?.id === msg.id && <span className="inline-block w-1.5 h-4 bg-accent/50 animate-pulse ml-0.5 align-middle" />}</div>
+                  ) : (
+                    msg.content
+                  )}
                 </div>
               </div>
             ))}
 
-            {isTyping && (
+            {isTyping && messages.length > 0 && messages[messages.length - 1]?.content === "" && (
               <div className="flex justify-start">
                 <div className="shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center mr-2.5">
                   <Sparkles className="w-3.5 h-3.5 text-accent" strokeWidth={2} />
