@@ -1,26 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { Zap, PiggyBank, Clock, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, ClipboardList, Brain, Bot, Cpu, Sparkles } from "lucide-react";
+import { Zap, PiggyBank, Clock, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, Brain, Bot, Cpu, Sparkles } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
 import ImplementationTray from "@/components/ImplementationTray";
 import { useCompanyData } from "@/lib/company-data";
 import type { Task } from "@/lib/types";
 
-const ACTION_LABELS: Record<string, { label: string; dept: string }> = {
-  t1: { label: "Automate weekly performance reporting", dept: "Marketing" },
-  t2: { label: "AI-powered sales outreach at scale", dept: "Sales" },
-  t3: { label: "Streamline client onboarding handoff", dept: "Operations" },
-  t4: { label: "AI-assisted PRD writing and sprint planning", dept: "Product" },
-  t5: { label: "Automate P&L and financial close", dept: "Finance" },
-  t6: { label: "Replace status meetings with async updates", dept: "Operations" },
-  t7: { label: "Generate campaign briefs from bullet points", dept: "Marketing" },
-  t8: { label: "Convert tribal knowledge into documented SOPs", dept: "Operations" },
-  t15: { label: "Auto-generate release notes from PRs", dept: "Engineering" },
-  t16: { label: "AI-powered user research synthesis", dept: "Product" },
-};
+// Task type extended with optional dbId for UUID matching
+interface TaskWithDbId extends Task {
+  dbId?: string;
+}
 
 const DEPT_ICONS: Record<string, { Icon: typeof DollarSign; bg: string }> = {
   Sales: { Icon: DollarSign, bg: "#22c55e" }, Marketing: { Icon: Megaphone, bg: "#a855f7" },
@@ -85,7 +76,10 @@ export default function RoadmapPage() {
 
               <div className="space-y-10">
                 {roadmap.map((phase, phaseIdx) => {
-                  const phaseTasks = tasks.filter((t) => phase.taskIds.includes(t.id));
+                  const phaseTasks = tasks.filter((t) => {
+                    const tw = t as TaskWithDbId;
+                    return phase.taskIds.includes(t.id) || (tw.dbId && phase.taskIds.includes(tw.dbId));
+                  });
                   const levelData = LEVEL_SUMMARIES[phase.phase];
                   const LevelIcon = LEVEL_ICONS[phase.phase - 1] || Brain;
                   const levelColor = LEVEL_COLORS[phase.phase - 1] || "#6b7280";
@@ -123,10 +117,11 @@ export default function RoadmapPage() {
                             </div>
                             <div className="flex flex-wrap gap-1.5">
                               {phaseTasks.map((task) => {
-                                const action = ACTION_LABELS[task.id];
-                                const deptIcon = DEPT_ICONS[action?.dept || task.department];
+                                const deptIcon = DEPT_ICONS[task.department];
                                 const IconComponent = deptIcon?.Icon || Wrench;
-                                const label = action?.label || task.title;
+                                const label = task.recommendation?.summary
+                                  ? task.recommendation.summary.split(",")[0].split(".")[0]
+                                  : task.title;
                                 return (
                                   <button
                                     key={task.id}

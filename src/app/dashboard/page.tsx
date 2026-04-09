@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sparkles, Activity, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, User, X, AlertTriangle, ArrowRight, Send } from "lucide-react";
+import { Sparkles, Activity, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, User, X, AlertTriangle, ArrowRight, Send, Users, Headphones } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
 import { useCompanyData } from "@/lib/company-data";
@@ -12,72 +12,23 @@ const DEPT_ICONS: Record<string, { Icon: typeof DollarSign; bg: string }> = {
   Sales: { Icon: DollarSign, bg: "#22c55e" }, Marketing: { Icon: Megaphone, bg: "#a855f7" },
   Finance: { Icon: TrendingUp, bg: "#3b52ce" }, Operations: { Icon: Wrench, bg: "#f59e0b" },
   Engineering: { Icon: FlaskConical, bg: "#6366f1" }, Product: { Icon: PackageSearch, bg: "#ec4899" },
+  "Customer Success": { Icon: Headphones, bg: "#ca8a04" }, HR: { Icon: Users, bg: "#3b82f6" },
+  IT: { Icon: Users, bg: "#dc2626" }, Support: { Icon: Headphones, bg: "#ca8a04" },
 };
-
-const SUGGESTED_QUESTIONS = [
-  { dept: "Sales", label: "How can I automate my sales calls?" },
-  { dept: "Marketing", label: "How can I book more appointments?" },
-  { dept: "Finance", label: "How to make my P&L populate automatically?" },
-];
 
 interface Finding {
   id: string;
-  depts?: string[];
-  person?: string;
-  text: string;
-  actions?: { label: string; dept: string }[];
   title: string;
   severity: "critical" | "high" | "medium";
   description: string;
-  evidence: { quote: string; person: string; date: string }[];
   impact: string;
   recommendation: string;
   relatedWorkflows: { id: string; title: string; dept: string }[];
   estimatedSavings?: string;
+  depts?: string[];
+  person?: string;
+  text: string;
 }
-
-const FINDINGS: Finding[] = [
-  {
-    id: "f1", depts: ["Sales", "Marketing"], text: "all pull from the same Salesforce data",
-    title: "Redundant data pulling across Sales and Marketing", severity: "high",
-    description: "Both Sales and Marketing independently export data from Salesforce and HubSpot every week. That's 3 teams pulling from the same sources — roughly 8 hours per week of duplicated effort.",
-    evidence: [
-      { quote: "I pull some of the same HubSpot data for my monthly financial reports. Didn't know marketing was pulling it weekly too.", person: "David Kim", date: "March 20, 2026" },
-      { quote: "Every Friday I spend about 3 hours pulling data from GA, HubSpot, and our spreadsheets.", person: "Sarah Chen", date: "March 15, 2026" },
-    ],
-    impact: "~8 hours/week of redundant work across 3 departments.",
-    recommendation: "Create a single automated data pipeline that pulls from Salesforce and HubSpot once. Eliminates all manual exports.",
-    relatedWorkflows: [{ id: "t1", title: "Weekly Performance Report", dept: "Marketing" }, { id: "t11", title: "Sales Forecasting", dept: "Sales" }],
-    estimatedSavings: "$20,800/year",
-  },
-  {
-    id: "f2", person: "Priya Patel", text: "is single point of failure in",
-    actions: [{ label: "Client onboarding", dept: "Operations" }, { label: "SOP documentation", dept: "Operations" }, { label: "Status updates", dept: "Operations" }],
-    title: "Single point of failure: Priya Patel (Operations)", severity: "critical",
-    description: "Priya is the sole contributor to 5 critical workflows in Operations. None are documented. If she's unavailable, these workflows stop entirely.",
-    evidence: [{ quote: "When Sales closes a deal, I get an email with the contract attached. Then I have to manually create the checklist, the Jira tickets, schedule the kickoff — it takes 4 hours per client.", person: "Priya Patel", date: "March 17, 2026" }],
-    impact: "5 workflows with zero backup. Highest operational risk in the organization.",
-    recommendation: "Document Priya's top 3 processes. Cross-train one team member. Automate status updates.",
-    relatedWorkflows: [{ id: "t3", title: "New Client Onboarding", dept: "Operations" }, { id: "t8", title: "SOP Documentation", dept: "Operations" }],
-    estimatedSavings: "$36,000/year",
-  },
-  {
-    id: "f3", depts: ["Sales", "Operations"], text: "have a 14-day handoff bottleneck",
-    title: "Sales → Operations handoff takes 14 days", severity: "high",
-    description: "When a deal closes, the handoff to Operations takes 14 days. Industry average is 3 days.",
-    evidence: [{ quote: "I close the deal and then I basically have to re-explain everything to Ops over email.", person: "Marcus Rivera", date: "March 16, 2026" }],
-    impact: "14-day delay. Clients experience a dead zone after signing.",
-    recommendation: "Auto-generate onboarding packages from deal data. Target: 48-hour kickoff.",
-    relatedWorkflows: [{ id: "t3", title: "New Client Onboarding", dept: "Operations" }],
-    estimatedSavings: "$15,600/year",
-  },
-];
-
-const ACTIVITY = [
-  { person: "Sarah Chen", action: "just completed their interview", time: "15 mins ago" },
-  { person: "Marcus Rivera", action: "just completed their interview", time: "2 hours ago" },
-  { person: "Priya Patel", action: "just completed their interview", time: "1 day ago" },
-];
 
 function DeptChip({ dept }: { dept: string }) {
   const cfg = DEPT_ICONS[dept];
@@ -98,18 +49,8 @@ function PersonChip({ name }: { name: string }) {
   );
 }
 
-function ActionChip({ label, dept }: { label: string; dept: string }) {
-  const cfg = DEPT_ICONS[dept];
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-border text-[11px]">
-      {cfg && <span className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: cfg.bg }}><cfg.Icon className="w-2.5 h-2.5 text-white" strokeWidth={2} /></span>}
-      {label}
-    </span>
-  );
-}
-
 export default function HomePage() {
-  const { company } = useCompanyData();
+  const { company, tasks, contributors, interviews, assessment, loading } = useCompanyData();
   const router = useRouter();
   const [chatInput, setChatInput] = useState("");
   const [activeFinding, setActiveFinding] = useState<Finding | null>(null);
@@ -118,9 +59,120 @@ export default function HomePage() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
+  // Derive findings from real data
+  const findings = useMemo(() => {
+    const result: Finding[] = [];
+
+    // Find bottleneck workflows grouped by department
+    const bottlenecks = tasks.filter((t) => t.isBottleneck);
+    if (bottlenecks.length > 0) {
+      const bottleneckDepts = [...new Set(bottlenecks.map((t) => t.department))];
+      result.push({
+        id: "f-bottlenecks",
+        depts: bottleneckDepts.slice(0, 3),
+        text: `have ${bottlenecks.length} workflow bottlenecks`,
+        title: `${bottlenecks.length} workflow bottlenecks identified across ${bottleneckDepts.length} departments`,
+        severity: "critical",
+        description: `We identified ${bottlenecks.length} workflows that are creating bottlenecks. These are high-frequency, time-intensive processes that slow down cross-team work.`,
+        impact: `${bottlenecks.length} bottleneck workflows creating delays across ${bottleneckDepts.length} departments.`,
+        recommendation: "Prioritize AI automation for these bottleneck workflows to eliminate delays and single points of failure.",
+        relatedWorkflows: bottlenecks.slice(0, 4).map((t) => ({ id: t.id, title: t.title, dept: t.department })),
+        estimatedSavings: undefined,
+      });
+    }
+
+    // Find single points of failure (contributors linked to many workflows)
+    const contributorWorkflowCount = new Map<string, { name: string; dept: string; count: number; workflows: typeof tasks }>();
+    for (const t of tasks) {
+      for (const cId of t.contributors) {
+        const c = contributors.find((x) => x.id === cId);
+        if (!c) continue;
+        if (!contributorWorkflowCount.has(cId)) {
+          contributorWorkflowCount.set(cId, { name: c.name, dept: c.department, count: 0, workflows: [] });
+        }
+        const entry = contributorWorkflowCount.get(cId)!;
+        entry.count++;
+        entry.workflows.push(t);
+      }
+    }
+    // Find contributor with most workflows
+    const topContributor = [...contributorWorkflowCount.entries()].sort((a, b) => b[1].count - a[1].count)[0];
+    if (topContributor && topContributor[1].count >= 3) {
+      const [, info] = topContributor;
+      result.push({
+        id: "f-spof",
+        person: info.name,
+        text: `is involved in ${info.count} workflows`,
+        title: `Single point of failure: ${info.name} (${info.dept})`,
+        severity: "critical",
+        description: `${info.name} is a key contributor to ${info.count} workflows in ${info.dept}. If they're unavailable, these workflows are at risk.`,
+        impact: `${info.count} workflows depend on a single person.`,
+        recommendation: `Document ${info.name}'s top processes, cross-train a backup, and automate where possible.`,
+        relatedWorkflows: info.workflows.slice(0, 4).map((t) => ({ id: t.id, title: t.title, dept: t.department })),
+      });
+    }
+
+    // Find highest-impact recommendations
+    const criticalRecs = tasks
+      .filter((t) => t.recommendation?.priority === "critical" && !t.isBottleneck)
+      .sort((a, b) => {
+        const costA = parseFloat((a.recommendation?.impact?.costSaved || "0").replace(/[^0-9.]/g, ""));
+        const costB = parseFloat((b.recommendation?.impact?.costSaved || "0").replace(/[^0-9.]/g, ""));
+        return costB - costA;
+      });
+    if (criticalRecs.length > 0) {
+      const topRecs = criticalRecs.slice(0, 3);
+      const totalSavings = topRecs.reduce((sum, t) => {
+        return sum + parseFloat((t.recommendation?.impact?.costSaved || "0").replace(/[^0-9.]/g, ""));
+      }, 0);
+      result.push({
+        id: "f-quick-wins",
+        depts: [...new Set(topRecs.map((t) => t.department))],
+        text: "have high-impact quick wins available",
+        title: "Top AI automation opportunities identified",
+        severity: "high",
+        description: `${criticalRecs.length} workflows have critical-priority AI recommendations that can be implemented quickly for significant impact.`,
+        impact: `${criticalRecs.length} workflows ready for immediate AI automation.`,
+        recommendation: "Start with the highest-savings workflows to build momentum and demonstrate ROI.",
+        relatedWorkflows: topRecs.map((t) => ({ id: t.id, title: t.title, dept: t.department })),
+        estimatedSavings: totalSavings > 0 ? `$${Math.round(totalSavings).toLocaleString()}/year` : undefined,
+      });
+    }
+
+    return result.slice(0, 3);
+  }, [tasks, contributors]);
+
+  // Derive recent activity from real interviews
+  const recentActivity = useMemo(() => {
+    return interviews
+      .filter((iv: any) => iv.status === "completed" && iv.person)
+      .slice(0, 5)
+      .map((iv: any) => ({
+        person: iv.person?.name || "Unknown",
+        action: `completed their interview (${iv.workflowsExtracted || 0} workflows extracted)`,
+        time: iv.completedAt
+          ? formatTimeAgo(iv.completedAt)
+          : iv.invitedAt
+            ? formatTimeAgo(iv.invitedAt)
+            : "",
+      }));
+  }, [interviews]);
+
+  // Suggested questions based on real departments
+  const suggestedQuestions = useMemo(() => {
+    const depts = [...new Set(tasks.map((t) => t.department))].slice(0, 3);
+    return depts.map((dept) => {
+      const deptTasks = tasks.filter((t) => t.department === dept);
+      const bottleneck = deptTasks.find((t) => t.isBottleneck);
+      const label = bottleneck
+        ? `How can AI help with ${bottleneck.title.toLowerCase()}?`
+        : `What AI opportunities exist in ${dept}?`;
+      return { dept, label };
+    });
+  }, [tasks]);
+
   const handleSend = () => {
     if (!chatInput.trim()) return;
-    // Navigate to AI Assistant with the query
     router.push(`/ai-assistant?q=${encodeURIComponent(chatInput.trim())}`);
   };
 
@@ -130,7 +182,7 @@ export default function HomePage() {
       <div className="flex-1 overflow-y-auto scroll-thin">
         <div className="max-w-3xl mx-auto px-8 py-8">
 
-          <h2 className="text-xl font-semibold tracking-tight mb-6">{greeting}, Frank</h2>
+          <h2 className="text-xl font-semibold tracking-tight mb-6">{greeting}</h2>
 
           {/* Chat input */}
           <div className="mb-3">
@@ -141,7 +193,7 @@ export default function HomePage() {
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                  placeholder="Ask anything about your company ..."
+                  placeholder={`Ask anything about ${company.name} ...`}
                   rows={3}
                   className="w-full bg-transparent text-[15px] placeholder:text-muted-light focus:outline-none resize-none leading-relaxed"
                 />
@@ -160,7 +212,7 @@ export default function HomePage() {
 
           {/* Suggested questions */}
           <div className="flex flex-wrap gap-2 mb-12">
-            {SUGGESTED_QUESTIONS.map((q, i) => {
+            {suggestedQuestions.map((q, i) => {
               const cfg = DEPT_ICONS[q.dept];
               return (
                 <button key={i} onClick={() => { setChatInput(q.label); inputRef.current?.focus(); }} className="flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] border border-border hover:border-muted-light transition-colors">
@@ -180,7 +232,11 @@ export default function HomePage() {
                 <h3 className="text-[14px] font-semibold">Top findings</h3>
               </div>
               <div className="rounded-2xl border border-border p-5 space-y-6">
-                {FINDINGS.map((finding, i) => (
+                {loading && <p className="text-[13px] text-muted-light">Loading...</p>}
+                {!loading && findings.length === 0 && (
+                  <p className="text-[13px] text-muted-light">Complete more interviews to generate findings.</p>
+                )}
+                {findings.map((finding, i) => (
                   <div key={finding.id}>
                     <button onClick={() => setActiveFinding(finding)} className="w-full text-left hover:bg-surface/50 -mx-2 px-2 py-1.5 rounded-lg transition-colors">
                       {finding.depts && !finding.person && (
@@ -195,15 +251,10 @@ export default function HomePage() {
                             <span className="inline-block mr-1.5 align-middle"><PersonChip name={finding.person} /></span>
                             <span className="text-[13px] font-medium align-middle">{finding.text}</span>
                           </div>
-                          {finding.actions && (
-                            <div className="flex flex-wrap gap-1.5 mt-2">
-                              {finding.actions.map((a, j) => <ActionChip key={j} label={a.label} dept={a.dept} />)}
-                            </div>
-                          )}
                         </div>
                       )}
                     </button>
-                    {i < FINDINGS.length - 1 && <div className="mt-4" />}
+                    {i < findings.length - 1 && <div className="mt-4" />}
                   </div>
                 ))}
               </div>
@@ -216,13 +267,17 @@ export default function HomePage() {
                 <h3 className="text-[14px] font-semibold">Recent activity</h3>
               </div>
               <div className="rounded-2xl border border-border p-5 space-y-4">
-                {ACTIVITY.map((item, i) => (
+                {loading && <p className="text-[13px] text-muted-light">Loading...</p>}
+                {!loading && recentActivity.length === 0 && (
+                  <p className="text-[13px] text-muted-light">No recent activity yet.</p>
+                )}
+                {recentActivity.map((item, i) => (
                   <div key={i} className="flex flex-col gap-1">
                     <div className="flex items-center gap-1.5">
                       <PersonChip name={item.person} />
                       <span className="text-[13px]">{item.action}</span>
                     </div>
-                    <span className="text-[11px] text-muted-light">{item.time}</span>
+                    {item.time && <span className="text-[11px] text-muted-light">{item.time}</span>}
                   </div>
                 ))}
               </div>
@@ -252,17 +307,6 @@ export default function HomePage() {
             </div>
             <div className="flex-1 overflow-y-auto scroll-thin px-6 py-5 space-y-6">
               <p className="text-[14px] text-muted leading-relaxed">{activeFinding.description}</p>
-              <div>
-                <h3 className="text-[12px] font-semibold text-muted-light uppercase tracking-widest mb-3">Evidence</h3>
-                <div className="space-y-3">
-                  {activeFinding.evidence.map((e, i) => (
-                    <div key={i} className="p-3.5 rounded-xl border border-border">
-                      <p className="text-[13px] italic leading-relaxed">&ldquo;{e.quote}&rdquo;</p>
-                      <div className="mt-2 flex items-center gap-2 text-[11px] text-muted"><PersonChip name={e.person} /><span>{e.date}</span></div>
-                    </div>
-                  ))}
-                </div>
-              </div>
               <div className="p-4 rounded-xl bg-red-50/50 border border-red-200/50">
                 <div className="flex items-center gap-2 mb-2"><AlertTriangle className="w-4 h-4 text-red-500" strokeWidth={1.5} /><h3 className="text-[12px] font-semibold text-red-700 uppercase tracking-widest">Impact</h3></div>
                 <p className="text-[13px] text-red-900/70">{activeFinding.impact}</p>
@@ -293,4 +337,19 @@ export default function HomePage() {
       )}
     </AppShell>
   );
+}
+
+function formatTimeAgo(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return "just now";
+  if (diffMins < 60) return `${diffMins} mins ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours} hours ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return "1 day ago";
+  if (diffDays < 30) return `${diffDays} days ago`;
+  return date.toLocaleDateString();
 }

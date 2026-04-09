@@ -78,6 +78,7 @@ export async function getWorkflows(companyId?: string) {
     if (data && data.length > 0) {
       return data.map((w) => ({
         id: w.short_id || w.id,
+        dbId: w.id, // full UUID for roadmap matching
         title: w.title,
         description: w.description || "",
         department: w.department || "",
