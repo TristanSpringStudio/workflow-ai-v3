@@ -2,8 +2,9 @@
 
 import { use, useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { Send, ArrowRight, Check, Pencil, Building2, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, Users, Share2, Headphones, User } from "lucide-react";
+import { Send, ArrowRight, Check, Building2, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, Users, Share2, Headphones } from "lucide-react";
 import { company } from "@/lib/mock-data";
+import type { ExtractedSoFar } from "@/lib/ai/schemas/interview-output";
 
 // ─── Tool logos ───
 const TOOL_DOMAINS: Record<string, string> = {
@@ -37,99 +38,71 @@ interface ChatMsg {
   content: string;
   pills?: string[];
   options?: { label: string; value: string }[];
-  deptPills?: string[];
-}
-
-interface InterviewData {
-  name: string;
-  role: string;
-  department: string;
-  tools: string[];
-  dailyTasks: string[];
-  painPoints: string[];
-  infoSources: string[];
-  handoffs: string[];
-  aiComfort: string;
-}
-
-const DEPARTMENTS = ["Marketing", "Sales", "Operations", "Engineering", "Product", "Finance", "Design", "Support", "HR", "Legal"];
-const TOOLS = Object.keys(TOOL_DOMAINS);
-
-// ─── Conversation steps ───
-function getStep(step: number, userInput: string, ctx: Record<string, string>): { messages: ChatMsg[]; nextStep: number } {
-  const id = () => Math.random().toString(36).slice(2, 8);
-  switch (step) {
-    case 0:
-      return { messages: [{ id: id(), role: "assistant", content: "Hey! I'm going to ask you about your role, daily work, and how information flows through your team. This helps us build an intelligence map of your organization.\n\nWhat's your name and what do you do?" }], nextStep: 1 };
-    case 1: {
-      const name = userInput.split(" ")[0] || "there";
-      return { messages: [{ id: id(), role: "assistant", content: `Great to meet you, ${name}. Which department are you in?`, deptPills: DEPARTMENTS }], nextStep: 2 };
-    }
-    case 2:
-      return { messages: [{ id: id(), role: "assistant", content: `Got it — ${userInput}.\n\nWhat tools do you use daily? Click all that apply, or type any I missed.`, pills: TOOLS }], nextStep: 3 };
-    case 3:
-      return { messages: [{ id: id(), role: "assistant", content: "Good stack. Now walk me through your main tasks — what does a typical day or week look like? What do you spend the most time on?" }], nextStep: 4 };
-    case 4:
-      return { messages: [{ id: id(), role: "assistant", content: "What feels the most repetitive or tedious? The stuff that takes way too long." }], nextStep: 5 };
-    case 5:
-      return { messages: [{ id: id(), role: "assistant", content: "Where do you get the information you need? Which teams or tools do you pull data from?" }], nextStep: 6 };
-    case 6:
-      return { messages: [{ id: id(), role: "assistant", content: "What do you hand off to other teams? What do they need from you?" }], nextStep: 7 };
-    case 7:
-      return { messages: [{ id: id(), role: "assistant", content: "Last one — how comfortable are you with AI tools?", options: [
-        { label: "Never used them", value: "none" },
-        { label: "Tried a few times", value: "beginner" },
-        { label: "Use regularly", value: "intermediate" },
-        { label: "Power user", value: "advanced" },
-      ] }], nextStep: 8 };
-    default:
-      return { messages: [], nextStep: step + 1 };
-  }
-}
-
-// ─── Task extraction ───
-function extractTasks(data: InterviewData): { title: string; frequency: string }[] {
-  const tasks: { title: string; frequency: string }[] = [];
-  const text = data.dailyTasks.join(" ").toLowerCase();
-  if (text.includes("report") || text.includes("data")) tasks.push({ title: "Compile and distribute reports", frequency: "Weekly" });
-  if (text.includes("email") || text.includes("outreach")) tasks.push({ title: "Write and send outreach emails", frequency: "Daily" });
-  if (text.includes("meeting") || text.includes("standup")) tasks.push({ title: "Run team meetings and follow-ups", frequency: "Daily" });
-  if (text.includes("review") || text.includes("edit")) tasks.push({ title: "Review and edit content or deliverables", frequency: "Daily" });
-  if (text.includes("plan") || text.includes("calendar")) tasks.push({ title: "Planning and calendar management", frequency: "Weekly" });
-  if (text.includes("client") || text.includes("customer")) tasks.push({ title: "Client communication and management", frequency: "Daily" });
-  if (tasks.length === 0) { tasks.push({ title: "Daily operational tasks", frequency: "Daily" }); tasks.push({ title: "Team coordination and updates", frequency: "Daily" }); }
-  return tasks;
-}
-
-function generateSummary(data: InterviewData): string {
-  return `${data.name} is a ${data.role} in the ${data.department} department, working primarily with ${data.tools.slice(0, 3).join(", ")}${data.tools.length > 3 ? ` and ${data.tools.length - 3} other tools` : ""}. Their day-to-day involves ${data.dailyTasks[0]?.toLowerCase() || "various operational tasks"}. Key pain points include ${data.painPoints[0]?.toLowerCase() || "repetitive manual processes"}.`;
 }
 
 type Phase = "welcome" | "chat" | "summary" | "done";
 
 const STORAGE_KEY_PREFIX = "vishtan-interview-";
 
+// Token context from Supabase
+interface TokenContext {
+  id: string; // token record ID
+  token: string;
+  company_id: string;
+  contributor_id: string | null;
+  companies: { id: string; name: string } | null;
+  contributors: { id: string; name: string; email: string; role: string; department: string } | null;
+}
+
 export default function InterviewPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = use(params);
   const storageKey = STORAGE_KEY_PREFIX + token;
 
   const [phase, setPhase] = useState<Phase>("welcome");
-  const [name, setName] = useState("");
+  const [welcomeName, setWelcomeName] = useState("");
   const [email, setEmail] = useState("");
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
-  const [step, setStep] = useState(0);
-  const [context, setContext] = useState<Record<string, string>>({});
   const [isTyping, setIsTyping] = useState(false);
   const [selectedPills, setSelectedPills] = useState<Set<string>>(new Set());
-  const [interviewData, setInterviewData] = useState<InterviewData>({
-    name: "", role: "", department: "", tools: [], dailyTasks: [], painPoints: [], infoSources: [], handoffs: [], aiComfort: "",
+  const [extracted, setExtracted] = useState<ExtractedSoFar>({
+    tools: [], workflows: [], painPoints: [], handoffs: [],
   });
   const [submitted, setSubmitted] = useState(false);
+  const [tokenCtx, setTokenCtx] = useState<TokenContext | null>(null);
+  const [tokenError, setTokenError] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load saved state on mount
+  // The conversation history sent to the API (plain role+content, no UI metadata)
+  const apiMessages = messages.map((m) => ({ role: m.role, content: m.content }));
+
+  // Resolved company name — from DB or fallback
+  const companyName = tokenCtx?.companies?.name || company.name;
+
+  // Look up the token on mount
+  useEffect(() => {
+    async function lookup() {
+      try {
+        const res = await fetch(`/api/interview/token?token=${token}`);
+        if (res.ok) {
+          const data = await res.json();
+          setTokenCtx(data);
+          // Pre-fill name/email if contributor already exists
+          if (data.contributors?.name) setWelcomeName(data.contributors.name);
+          if (data.contributors?.email) setEmail(data.contributors.email);
+        } else {
+          // Token not found — still allow interview with mock company (dev mode)
+          console.warn("Token not found in DB, using fallback");
+        }
+      } catch {
+        console.warn("Could not look up token, using fallback");
+      }
+    }
+    lookup();
+  }, [token]);
+
+  // Load saved state from localStorage (fallback / resume)
   useEffect(() => {
     try {
       const saved = localStorage.getItem(storageKey);
@@ -137,83 +110,134 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
         const state = JSON.parse(saved);
         if (state.submitted) {
           setPhase("done");
-          setInterviewData(state.interviewData);
+          setExtracted(state.extracted || { tools: [], workflows: [], painPoints: [], handoffs: [] });
           setSubmitted(true);
         } else if (state.messages?.length > 0) {
           setMessages(state.messages);
-          setStep(state.step);
-          setContext(state.context || {});
-          setInterviewData(state.interviewData || { name: "", role: "", department: "", tools: [], dailyTasks: [], painPoints: [], infoSources: [], handoffs: [], aiComfort: "" });
-          setName(state.name || "");
-          setEmail(state.email || "");
+          setExtracted(state.extracted || { tools: [], workflows: [], painPoints: [], handoffs: [] });
+          if (!welcomeName && state.welcomeName) setWelcomeName(state.welcomeName);
+          if (!email && state.email) setEmail(state.email);
           setPhase("chat");
         }
       }
     } catch {}
   }, [storageKey]);
 
-  // Auto-save on every change
+  // Auto-save to localStorage
   useEffect(() => {
     if (phase === "welcome") return;
     try {
       localStorage.setItem(storageKey, JSON.stringify({
-        messages, step, context, interviewData, name, email, submitted,
+        messages, extracted, welcomeName, email, submitted,
       }));
     } catch {}
-  }, [messages, step, context, interviewData, name, email, submitted, storageKey, phase]);
+  }, [messages, extracted, welcomeName, email, submitted, storageKey, phase]);
+
+  // Auto-save to Supabase (debounced, on each new message)
+  useEffect(() => {
+    if (!tokenCtx || phase === "welcome" || messages.length === 0) return;
+    const timeout = setTimeout(() => {
+      fetch("/api/interview/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tokenId: tokenCtx.id,
+          companyId: tokenCtx.company_id,
+          contributorId: tokenCtx.contributor_id,
+          transcript: messages.map((m) => ({ role: m.role, content: m.content })),
+          extractedData: extracted,
+        }),
+      }).catch(() => {}); // Silent fail — localStorage is the primary backup
+    }, 2000); // 2s debounce
+    return () => clearTimeout(timeout);
+  }, [messages, extracted, tokenCtx, phase]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, isTyping]);
 
-  const simulateTyping = useCallback((msgs: ChatMsg[]) => {
+  /**
+   * Call the interview API and handle the response.
+   */
+  const callInterviewAPI = useCallback(async (msgs: { role: "assistant" | "user"; content: string }[]) => {
     setIsTyping(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/interview/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: msgs, companyName, userName: welcomeName }),
+      });
+
+      if (!res.ok) throw new Error("API error");
+
+      const data = await res.json();
+
+      // Update extracted data
+      if (data.extractedSoFar) {
+        setExtracted(data.extractedSoFar);
+      }
+
+      // Build the chat message with optional UI elements
+      const assistantMsg: ChatMsg = {
+        id: Math.random().toString(36).slice(2, 8),
+        role: "assistant",
+        content: data.message,
+        pills: data.suggestedPills,
+        options: data.suggestedOptions,
+      };
+
+      setMessages((prev) => [...prev, assistantMsg]);
+
+      // Check if interview is complete
+      if (data.interviewComplete) {
+        setTimeout(() => setPhase("summary"), 1500);
+      }
+    } catch (error) {
+      console.error("Interview API error:", error);
+      // Fallback message
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Math.random().toString(36).slice(2, 8),
+          role: "assistant",
+          content: "Sorry, I had a brief hiccup. Could you repeat that?",
+        },
+      ]);
+    } finally {
       setIsTyping(false);
-      setMessages((p) => [...p, ...msgs]);
       setTimeout(() => inputRef.current?.focus(), 100);
-    }, 1000);
+    }
   }, []);
 
   const startInterview = () => {
     setPhase("chat");
-    const result = getStep(0, "", {});
-    simulateTyping(result.messages);
-    setStep(result.nextStep);
+    // Get the opening message from API (empty messages = opening)
+    callInterviewAPI([]);
   };
 
   const handleSend = (text?: string) => {
     const value = text || input.trim();
     if (!value || isTyping) return;
 
-    setMessages((p) => [...p, { id: Math.random().toString(36).slice(2, 8), role: "user", content: value }]);
+    const userMsg: ChatMsg = {
+      id: Math.random().toString(36).slice(2, 8),
+      role: "user",
+      content: value,
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setSelectedPills(new Set());
+    // Reset textarea height
+    if (inputRef.current) inputRef.current.style.height = "auto";
 
-    const newData = { ...interviewData };
-    if (step === 1) { newData.name = value.split(",")[0]?.split(" ")[0] || value; newData.role = value; }
-    if (step === 2) newData.department = value;
-    if (step === 3) newData.tools = value.split(",").map((s) => s.trim()).filter(Boolean);
-    if (step === 4) newData.dailyTasks = [value];
-    if (step === 5) newData.painPoints = [value];
-    if (step === 6) newData.infoSources = [value];
-    if (step === 7) newData.handoffs = [value];
-    if (step === 8) {
-      newData.aiComfort = value;
-      setInterviewData(newData);
-      setTimeout(() => setPhase("summary"), 1500);
-      return;
-    }
-    setInterviewData(newData);
+    // Build the full message history including the new user message
+    const fullHistory = [
+      ...apiMessages,
+      { role: "user" as const, content: value },
+    ];
 
-    const newCtx = { ...context };
-    if (step === 1) newCtx.name = value;
-    if (step === 2) newCtx.department = value;
-    setContext(newCtx);
-
-    const result = getStep(step, value, newCtx);
-    simulateTyping(result.messages);
-    setStep(result.nextStep);
+    callInterviewAPI(fullHistory);
   };
 
   const togglePill = (pill: string) => {
@@ -226,9 +250,7 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
     });
   };
 
-  const extractedTasks = extractTasks(interviewData);
-  const summary = generateSummary(interviewData);
-  const deptConfig = DEPT_ICONS[interviewData.department] || { Icon: Building2, bg: "#6b7280" };
+  const deptConfig = DEPT_ICONS[extracted.department || ""] || { Icon: Building2, bg: "#6b7280" };
 
   // ─── Welcome Screen ───
   if (phase === "welcome") {
@@ -238,10 +260,10 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
           {/* Company branding */}
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-xl bg-foreground flex items-center justify-center text-[14px] font-bold text-background">
-              {company.name.split(" ").map((w) => w[0]).join("")}
+              {companyName.split(" ").map((w) => w[0]).join("")}
             </div>
             <div>
-              <p className="text-[15px] font-semibold">{company.name}</p>
+              <p className="text-[15px] font-semibold">{companyName}</p>
               <p className="text-[12px] text-muted-light">Powered by Vishtan</p>
             </div>
           </div>
@@ -254,8 +276,8 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
 
           <div className="space-y-3 mb-8">
             <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={welcomeName}
+              onChange={(e) => setWelcomeName(e.target.value)}
               placeholder="Your name"
               className="w-full h-11 px-4 rounded-xl bg-surface border border-border text-[14px] placeholder:text-muted-light focus:outline-none focus:border-accent/40 focus:ring-2 focus:ring-accent/10"
             />
@@ -270,7 +292,7 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
 
           <button
             onClick={startInterview}
-            disabled={!name.trim()}
+            disabled={!welcomeName.trim()}
             className="w-full h-11 rounded-xl bg-accent text-white text-[14px] font-medium hover:bg-accent-hover transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             Start interview
@@ -295,7 +317,7 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
           </div>
           <h2 className="text-xl font-semibold mb-2">Interview submitted</h2>
           <p className="text-[14px] text-muted mb-6">
-            Thanks, {interviewData.name}! Your responses have been recorded and will be incorporated into the intelligence layer.
+            Thanks{extracted.name ? `, ${extracted.name}` : ""}! Your responses have been recorded and will be incorporated into the intelligence layer.
             The more people who complete this, the more accurate the picture becomes.
           </p>
           <button onClick={() => { setPhase("chat"); setSubmitted(false); }} className="text-[13px] text-accent hover:text-accent-hover">
@@ -309,15 +331,19 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
 
   // ─── Summary Screen ───
   if (phase === "summary") {
+    const summaryText = extracted.name
+      ? `${extracted.name} is a ${extracted.role || "team member"} in the ${extracted.department || "organization"}, working primarily with ${extracted.tools.slice(0, 3).join(", ")}${extracted.tools.length > 3 ? ` and ${extracted.tools.length - 3} other tools` : ""}. ${extracted.workflows.length} workflows identified across their day-to-day work.`
+      : "Interview data captured.";
+
     return (
       <div className="min-h-screen bg-background">
         {/* Minimal header */}
         <div className="h-14 border-b border-border px-6 flex items-center">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-lg bg-foreground flex items-center justify-center text-[9px] font-bold text-background">
-              {company.name.split(" ").map((w) => w[0]).join("")}
+              {companyName.split(" ").map((w) => w[0]).join("")}
             </div>
-            <span className="text-[13px] font-medium">{company.name}</span>
+            <span className="text-[13px] font-medium">{companyName}</span>
             <span className="text-muted-light">/</span>
             <span className="text-[13px] text-muted">Interview Summary</span>
           </div>
@@ -331,11 +357,11 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
           <div className="p-5 rounded-2xl border border-border mb-5">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center text-[16px] font-bold text-white" style={{ background: deptConfig.bg }}>
-                {interviewData.name.charAt(0) || "?"}
+                {(extracted.name || "?").charAt(0)}
               </div>
               <div>
-                <h3 className="text-[16px] font-semibold">{interviewData.name || "Name"}</h3>
-                <p className="text-[13px] text-muted">{interviewData.role || "Role"} · {interviewData.department || "Department"}</p>
+                <h3 className="text-[16px] font-semibold">{extracted.name || "Name"}</h3>
+                <p className="text-[13px] text-muted">{extracted.role || "Role"} · {extracted.department || "Department"}</p>
               </div>
             </div>
           </div>
@@ -343,42 +369,61 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
           {/* Summary */}
           <div className="p-5 rounded-2xl bg-surface border border-border mb-5">
             <h3 className="text-[13px] font-semibold mb-2">Summary</h3>
-            <p className="text-[13px] text-muted leading-relaxed">{summary}</p>
+            <p className="text-[13px] text-muted leading-relaxed">{summaryText}</p>
           </div>
 
-          {/* Tasks */}
-          <div className="p-5 rounded-2xl border border-border mb-5">
-            <h3 className="text-[13px] font-semibold mb-3">Workflows & Tasks</h3>
-            <div className="space-y-2">
-              {extractedTasks.map((task, i) => (
-                <div key={i} className="flex items-center justify-between p-2.5 rounded-lg border border-border">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: deptConfig.bg }}>
-                      <deptConfig.Icon className="w-3 h-3 text-white" strokeWidth={2} />
+          {/* Workflows */}
+          {extracted.workflows.length > 0 && (
+            <div className="p-5 rounded-2xl border border-border mb-5">
+              <h3 className="text-[13px] font-semibold mb-3">Workflows & Tasks</h3>
+              <div className="space-y-2">
+                {extracted.workflows.map((wf, i) => (
+                  <div key={i} className="flex items-center justify-between p-2.5 rounded-lg border border-border">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: deptConfig.bg }}>
+                        <deptConfig.Icon className="w-3 h-3 text-white" strokeWidth={2} />
+                      </div>
+                      <span className="text-[13px]">{wf.title}</span>
                     </div>
-                    <span className="text-[13px]">{task.title}</span>
+                    {wf.frequency && (
+                      <span className="text-[11px] text-muted-light px-2 py-0.5 rounded-full bg-surface border border-border">{wf.frequency}</span>
+                    )}
                   </div>
-                  <span className="text-[11px] text-muted-light px-2 py-0.5 rounded-full bg-surface border border-border">{task.frequency}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Tools */}
+          {extracted.tools.length > 0 && (
+            <div className="p-5 rounded-2xl border border-border mb-5">
+              <h3 className="text-[13px] font-semibold mb-3">Tools</h3>
+              <div className="flex flex-wrap gap-1.5">
+                {extracted.tools.map((tool) => {
+                  const logo = getLogo(tool);
+                  return (
+                    <span key={tool} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border text-[12px]">
+                      {logo && <Image src={logo} alt={tool} width={14} height={14} unoptimized />}
+                      {tool}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Pain Points */}
+          {extracted.painPoints.length > 0 && (
+            <div className="p-5 rounded-2xl border border-border mb-5">
+              <h3 className="text-[13px] font-semibold mb-3">Pain Points</h3>
+              {extracted.painPoints.map((pp, i) => (
+                <div key={i} className="flex gap-2 py-1.5">
+                  <span className="text-[12px] text-red-400 shrink-0">•</span>
+                  <span className="text-[13px] text-muted">{pp}</span>
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Tools */}
-          <div className="p-5 rounded-2xl border border-border mb-5">
-            <h3 className="text-[13px] font-semibold mb-3">Tools</h3>
-            <div className="flex flex-wrap gap-1.5">
-              {interviewData.tools.map((tool) => {
-                const logo = getLogo(tool);
-                return (
-                  <span key={tool} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border text-[12px]">
-                    {logo && <Image src={logo} alt={tool} width={14} height={14} unoptimized />}
-                    {tool}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
+          )}
 
           {/* Actions */}
           <div className="flex items-center gap-3">
@@ -386,7 +431,25 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
               Back to interview
             </button>
             <button
-              onClick={() => { setSubmitted(true); setPhase("done"); }}
+              onClick={async () => {
+                setSubmitted(true);
+                setPhase("done");
+                // Persist to Supabase
+                if (tokenCtx) {
+                  try {
+                    await fetch("/api/interview/complete", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        tokenId: tokenCtx.id,
+                        companyId: tokenCtx.company_id,
+                        transcript: messages.map((m) => ({ role: m.role, content: m.content })),
+                        extractedData: extracted,
+                      }),
+                    });
+                  } catch {}
+                }
+              }}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-white text-[13px] font-medium hover:bg-accent-hover transition-colors"
             >
               <Check className="w-4 h-4" strokeWidth={2} />
@@ -405,9 +468,9 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
       <div className="shrink-0 h-14 border-b border-border px-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-lg bg-foreground flex items-center justify-center text-[9px] font-bold text-background">
-            {company.name.split(" ").map((w) => w[0]).join("")}
+            {companyName.split(" ").map((w) => w[0]).join("")}
           </div>
-          <span className="text-[13px] font-medium">{company.name}</span>
+          <span className="text-[13px] font-medium">{companyName}</span>
           <span className="text-muted-light">/</span>
           <span className="text-[13px] text-muted">Interview</span>
         </div>
@@ -427,25 +490,15 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
               <div className={`max-w-[80%] ${msg.role === "user" ? "px-4 py-2.5 rounded-2xl rounded-br-md bg-accent text-white text-[14px]" : "text-[14px] leading-relaxed"}`}>
                 {msg.content.split("\n").map((line, i) => (<p key={i} className={i > 0 ? "mt-2" : ""}>{line}</p>))}
 
-                {msg.deptPills && (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {msg.deptPills.map((dept) => (
-                      <button key={dept} onClick={() => handleSend(dept)} className="px-3 py-1.5 rounded-full text-[12px] font-medium border border-border hover:border-accent/30 hover:text-accent bg-surface transition-colors">
-                        {dept}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
                 {msg.pills && (
                   <div className="mt-3 flex flex-wrap gap-1.5">
-                    {msg.pills.map((tool) => {
-                      const sel = selectedPills.has(tool);
-                      const logo = getLogo(tool);
+                    {msg.pills.map((pill) => {
+                      const sel = selectedPills.has(pill);
+                      const logo = getLogo(pill);
                       return (
-                        <button key={tool} onClick={() => togglePill(tool)} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] border transition-colors ${sel ? "bg-accent/10 border-accent/30 text-accent" : "bg-surface border-border hover:border-accent/30 hover:text-accent"}`}>
-                          {logo && <Image src={logo} alt={tool} width={14} height={14} unoptimized />}
-                          {tool}
+                        <button key={pill} onClick={() => togglePill(pill)} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] border transition-colors ${sel ? "bg-accent/10 border-accent/30 text-accent" : "bg-surface border-border hover:border-accent/30 hover:text-accent"}`}>
+                          {logo && <Image src={logo} alt={pill} width={14} height={14} unoptimized />}
+                          {pill}
                         </button>
                       );
                     })}
@@ -483,14 +536,27 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
       {/* Input */}
       <div className="shrink-0 border-t border-border bg-background px-6 py-3">
         <div className="max-w-xl mx-auto">
-          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2">
-            <input
+          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2 items-end">
+            <textarea
               ref={inputRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                // Auto-resize
+                const el = e.target;
+                el.style.height = "auto";
+                el.style.height = Math.min(el.scrollHeight, 120) + "px"; // 120px ≈ 5 lines
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
               placeholder="Type your response..."
               disabled={isTyping}
-              className="flex-1 h-10 px-4 rounded-xl bg-surface border border-border text-[14px] placeholder:text-muted-light focus:outline-none focus:border-accent/40 focus:ring-2 focus:ring-accent/10 disabled:opacity-50"
+              rows={1}
+              className="flex-1 min-h-[40px] max-h-[120px] px-4 py-2.5 rounded-xl bg-surface border border-border text-[14px] placeholder:text-muted-light focus:outline-none focus:border-accent/40 focus:ring-2 focus:ring-accent/10 disabled:opacity-50 resize-none leading-snug"
             />
             <button type="submit" disabled={isTyping || !input.trim()} className="h-10 w-10 rounded-xl bg-accent text-white flex items-center justify-center hover:bg-accent-hover transition-colors disabled:opacity-20 shrink-0">
               <Send className="w-4 h-4" strokeWidth={2} />

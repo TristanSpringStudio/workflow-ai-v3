@@ -1,0 +1,234 @@
+import { createAdminClient } from "./server";
+import {
+  company as mockCompany,
+  contributors as mockContributors,
+  tasks as mockTasks,
+  interviews as mockInterviews,
+  roadmap as mockRoadmap,
+  getDepartments as getMockDepartments,
+  getStats as getMockStats,
+} from "@/lib/mock-data";
+
+/**
+ * Data access layer with Supabase-first, mock-data fallback.
+ * When real data exists, it's returned. When empty, mock data fills the gap.
+ */
+
+export async function getCompany(companyId?: string) {
+  if (!companyId) return mockCompany;
+
+  try {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("companies")
+      .select("*")
+      .eq("id", companyId)
+      .single();
+
+    return data || mockCompany;
+  } catch {
+    return mockCompany;
+  }
+}
+
+export async function getContributors(companyId?: string) {
+  if (!companyId) return mockContributors;
+
+  try {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("contributors")
+      .select("*")
+      .eq("company_id", companyId)
+      .order("created_at", { ascending: false });
+
+    if (data && data.length > 0) {
+      // Map DB rows to the shape the UI expects
+      return data.map((c) => ({
+        id: c.id,
+        name: c.name,
+        role: c.role || "",
+        department: c.department || "",
+        avatar: "",
+        aiComfort: (c.ai_comfort || "none") as "none" | "beginner" | "intermediate" | "advanced",
+        interviewedAt: c.interviewed_at || undefined,
+      }));
+    }
+    return mockContributors;
+  } catch {
+    return mockContributors;
+  }
+}
+
+export async function getWorkflows(companyId?: string) {
+  if (!companyId) return mockTasks;
+
+  try {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("workflows")
+      .select(`
+        *,
+        workflow_contributors ( contributor_id ),
+        recommendations ( * )
+      `)
+      .eq("company_id", companyId)
+      .order("updated_at", { ascending: false });
+
+    if (data && data.length > 0) {
+      return data.map((w) => ({
+        id: w.short_id || w.id,
+        title: w.title,
+        description: w.description || "",
+        department: w.department || "",
+        contributors: (w.workflow_contributors || []).map((wc: { contributor_id: string }) => wc.contributor_id),
+        frequency: w.frequency || "",
+        timeSpent: w.time_spent || "",
+        tools: w.tools || [],
+        inputs: w.inputs || [],
+        steps: w.steps || [],
+        outputs: w.outputs || [],
+        painPoints: w.pain_points || [],
+        isBottleneck: w.is_bottleneck || false,
+        tags: w.tags || [],
+        lastUpdated: w.updated_at || w.created_at,
+        addedBy: w.added_by || "",
+        knowledge: w.knowledge || [],
+        recommendation: w.recommendations?.[0]
+          ? {
+              summary: w.recommendations[0].summary,
+              impact: w.recommendations[0].impact,
+              priority: w.recommendations[0].priority,
+              difficulty: w.recommendations[0].difficulty,
+              newSteps: w.recommendations[0].new_steps || [],
+              aiHandles: w.recommendations[0].ai_handles || [],
+              humanDecides: w.recommendations[0].human_decides || [],
+              phase: w.recommendations[0].phase,
+              implementation: w.recommendations[0].implementation,
+            }
+          : undefined,
+      }));
+    }
+    return mockTasks;
+  } catch {
+    return mockTasks;
+  }
+}
+
+export async function getInterviews(companyId?: string) {
+  if (!companyId) return mockInterviews;
+
+  try {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("interviews")
+      .select(`
+        *,
+        contributors ( id, name, role, department, ai_comfort ),
+        interview_tokens ( token )
+      `)
+      .eq("company_id", companyId)
+      .order("created_at", { ascending: false });
+
+    if (data && data.length > 0) {
+      return data.map((iv) => ({
+        id: iv.id,
+        contributorId: iv.contributor_id || "",
+        status: iv.status as "completed" | "in-progress" | "invited",
+        duration: iv.duration || "",
+        completedAt: iv.completed_at || undefined,
+        invitedAt: iv.created_at,
+        workflowsExtracted: iv.workflows_extracted || 0,
+        transcript: iv.transcript || [],
+        person: iv.contributors
+          ? {
+              id: iv.contributors.id,
+              name: iv.contributors.name,
+              role: iv.contributors.role || "",
+              department: iv.contributors.department || "",
+              avatar: "",
+              aiComfort: iv.contributors.ai_comfort || "none",
+            }
+          : undefined,
+      }));
+    }
+    return mockInterviews;
+  } catch {
+    return mockInterviews;
+  }
+}
+
+export async function getRoadmap(companyId?: string) {
+  if (!companyId) return mockRoadmap;
+
+  try {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("roadmap_phases")
+      .select("*")
+      .eq("company_id", companyId)
+      .order("phase", { ascending: true });
+
+    if (data && data.length > 0) {
+      return data.map((r) => ({
+        phase: r.phase as 1 | 2 | 3 | 4,
+        name: r.name,
+        duration: r.duration || "",
+        description: r.description || "",
+        taskIds: (r.workflow_ids || []).map(String),
+        milestones: r.milestones || [],
+      }));
+    }
+    return mockRoadmap;
+  } catch {
+    return mockRoadmap;
+  }
+}
+
+export async function getAssessment(companyId?: string) {
+  if (!companyId) return null;
+
+  try {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("assessments")
+      .select("*")
+      .eq("company_id", companyId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get the authenticated user's company ID.
+ * Returns null if not authenticated.
+ */
+export async function getUserCompanyId(): Promise<string | null> {
+  try {
+    const { createClient } = await import("./server");
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return null;
+
+    const { data: profile } = await supabase
+      .from("users")
+      .select("company_id")
+      .eq("id", user.id)
+      .single();
+
+    return profile?.company_id || null;
+  } catch {
+    return null;
+  }
+}
+
+// Re-export mock helpers as fallbacks
+export { getMockDepartments, getMockStats };
