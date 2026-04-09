@@ -95,19 +95,24 @@ export async function getWorkflows(companyId?: string) {
         lastUpdated: w.updated_at || w.created_at,
         addedBy: w.added_by || "",
         knowledge: w.knowledge || [],
-        recommendation: w.recommendations?.[0]
-          ? {
-              summary: w.recommendations[0].summary,
-              impact: w.recommendations[0].impact,
-              priority: w.recommendations[0].priority,
-              difficulty: w.recommendations[0].difficulty,
-              newSteps: w.recommendations[0].new_steps || [],
-              aiHandles: w.recommendations[0].ai_handles || [],
-              humanDecides: w.recommendations[0].human_decides || [],
-              phase: w.recommendations[0].phase,
-              implementation: w.recommendations[0].implementation,
-            }
-          : undefined,
+        recommendation: (() => {
+          // Supabase returns as object (1-to-1) or array (1-to-many)
+          const rec = Array.isArray(w.recommendations)
+            ? w.recommendations[0]
+            : w.recommendations;
+          if (!rec) return undefined;
+          return {
+            summary: rec.summary,
+            impact: rec.impact,
+            priority: rec.priority,
+            difficulty: rec.difficulty,
+            newSteps: rec.new_steps || [],
+            aiHandles: rec.ai_handles || [],
+            humanDecides: rec.human_decides || [],
+            phase: rec.phase,
+            implementation: rec.implementation,
+          };
+        })(),
       }));
     }
     return mockTasks;
