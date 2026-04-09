@@ -31,41 +31,26 @@ export default function SignupPage() {
     setError("");
 
     try {
-      // 1. Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: fullName },
-        },
+      // 1. Create user + company via server API (bypasses RLS, auto-confirms email)
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, fullName, companyName, industry, companySize }),
       });
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("Signup failed");
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Signup failed");
 
-      // 2. Create company
-      const { data: companyData, error: companyError } = await supabase
-        .from("companies")
-        .insert({ name: companyName, industry, size: companySize })
-        .select()
-        .single();
+      // 2. Sign in immediately (user is already confirmed)
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      if (companyError) throw companyError;
-
-      // 3. Create user profile linked to company
-      const { error: profileError } = await supabase
-        .from("users")
-        .insert({
-          id: authData.user.id,
-          company_id: companyData.id,
-          email,
-          full_name: fullName,
-          role: "admin",
-        });
-
-      if (profileError) throw profileError;
+      if (signInError) throw signInError;
 
       router.push("/dashboard");
+      router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
