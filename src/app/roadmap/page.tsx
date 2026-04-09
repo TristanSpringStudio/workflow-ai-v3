@@ -119,14 +119,12 @@ export default function RoadmapPage() {
                               {phaseTasks.map((task) => {
                                 const deptIcon = DEPT_ICONS[task.department];
                                 const IconComponent = deptIcon?.Icon || Wrench;
-                                const label = task.recommendation?.summary
-                                  ? task.recommendation.summary.split(",")[0].split(".")[0]
-                                  : task.title;
+                                const label = task.title;
                                 return (
                                   <button
                                     key={task.id}
                                     onClick={() => setTrayTask({ task, label })}
-                                    className="group flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border hover:border-muted-light transition-colors"
+                                    className="group flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border hover:border-muted-light transition-colors text-left"
                                   >
                                     <div className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: deptIcon?.bg || "#6b7280" }}>
                                       <IconComponent className="w-2.5 h-2.5 text-white" strokeWidth={2} />
