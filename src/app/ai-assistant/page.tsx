@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Sparkles, Send, ChevronDown, Check } from "lucide-react";
 import MessageShimmer from "@/components/MessageShimmer";
+import RichMessage from "@/components/RichMessage";
 import AppShell from "@/components/AppShell";
 
 interface ChatMsg { id: string; role: "assistant" | "user"; content: string; }
@@ -201,7 +202,7 @@ function AiAssistantContent() {
                 )}
                 <div className={`max-w-[80%] ${msg.role === "user" ? "px-4 py-2.5 rounded-2xl rounded-br-md bg-accent text-white text-[14px]" : "text-[14px] leading-relaxed text-muted"}`}>
                   {msg.role === "assistant" ? (
-                    <div className="whitespace-pre-wrap">{msg.content}{isTyping && messages[messages.length - 1]?.id === msg.id && <span className="inline-block w-1.5 h-4 bg-accent/50 animate-pulse ml-0.5 align-middle" />}</div>
+                    <div className="whitespace-pre-wrap"><RichMessage content={msg.content} />{isTyping && messages[messages.length - 1]?.id === msg.id && <span className="inline-block w-1.5 h-4 bg-accent/50 animate-pulse ml-0.5 align-middle" />}</div>
                   ) : (
                     msg.content
                   )}
