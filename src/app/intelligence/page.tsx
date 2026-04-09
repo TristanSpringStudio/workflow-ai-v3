@@ -256,7 +256,7 @@ export default function IntelligencePage() {
         {/* Table (list view) */}
         {view === "list" && <div className="flex-1 overflow-y-auto scroll-thin">
           {/* Table header */}
-          <div className="sticky top-0 z-10 bg-surface/80 backdrop-blur-sm border-b border-border px-6 py-2 grid grid-cols-[1fr_200px_160px_120px] gap-4 text-[11px] font-medium text-muted-light uppercase tracking-wider">
+          <div className="sticky top-0 z-10 bg-background border-b border-border px-6 py-2 grid grid-cols-[1fr_200px_160px_120px] gap-4 text-[11px] font-medium text-foreground/70 uppercase tracking-wider">
             <span>Workflow</span>
             <span className="flex items-center gap-1">
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" /></svg>
