@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Sparkles, Activity, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, User, X, AlertTriangle, ArrowRight, Send } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
-import { company } from "@/lib/mock-data";
+import { useCompanyData } from "@/lib/company-data";
 
 const DEPT_ICONS: Record<string, { Icon: typeof DollarSign; bg: string }> = {
   Sales: { Icon: DollarSign, bg: "#22c55e" }, Marketing: { Icon: Megaphone, bg: "#a855f7" },
@@ -109,6 +109,7 @@ function ActionChip({ label, dept }: { label: string; dept: string }) {
 }
 
 export default function HomePage() {
+  const { company } = useCompanyData();
   const router = useRouter();
   const [chatInput, setChatInput] = useState("");
   const [activeFinding, setActiveFinding] = useState<Finding | null>(null);

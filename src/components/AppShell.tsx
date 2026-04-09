@@ -4,8 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Radio, ClipboardList, Sparkles, Settings, ChevronRight, DollarSign, Megaphone, TrendingUp, Users, Share2, Headphones, Wrench, PackageSearch, FlaskConical, MessageSquare } from "lucide-react";
-import { company } from "@/lib/mock-data";
-import { getDepartments } from "@/lib/mock-data";
+import { useCompanyData } from "@/lib/company-data";
 
 const DEPT_CONFIG: Record<string, { color: string; bg: string; Icon: typeof DollarSign }> = {
   Sales: { color: "#ffffff", bg: "#22c55e", Icon: DollarSign },
@@ -31,6 +30,7 @@ const NAV_ITEMS = [
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { company, getDepartments } = useCompanyData();
   const departments = getDepartments();
   const [deptsOpen, setDeptsOpen] = useState(true);
 

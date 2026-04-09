@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Check, Clock, Send, Copy, Link2, Plus, User, Search, X, ArrowRight, Mail } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
-import { interviews, contributors, pendingContributors } from "@/lib/mock-data";
+import { useCompanyData } from "@/lib/company-data";
+import { pendingContributors } from "@/lib/mock-data";
 
 const DEPT_COLORS: Record<string, string> = {
   Marketing: "#a855f7", Sales: "#22c55e", Operations: "#f59e0b",
@@ -23,6 +24,7 @@ function timeAgo(date: string) {
 type SortKey = "date" | "name" | "dept";
 
 export default function InterviewsPage() {
+  const { interviews, contributors } = useCompanyData();
   const [showInvite, setShowInvite] = useState(false);
   const [copied, setCopied] = useState(false);
   const [sortBy, setSortBy] = useState<SortKey>("date");

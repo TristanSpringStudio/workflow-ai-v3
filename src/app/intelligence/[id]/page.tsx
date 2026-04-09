@@ -7,7 +7,7 @@ import { notFound } from "next/navigation";
 import { Sparkles, Eye, CheckCircle2, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
-import { tasks, contributors } from "@/lib/mock-data";
+import { useCompanyData } from "@/lib/company-data";
 import type { TaskStep } from "@/lib/types";
 
 const TOOL_DOMAINS: Record<string, string> = {
@@ -33,6 +33,7 @@ type Tab = "details" | "map" | "knowledge" | "dependencies" | "assessment" | "im
 
 export default function WorkflowInteriorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { tasks, contributors } = useCompanyData();
   const task = tasks.find((t) => t.id === id);
   if (!task) notFound();
 

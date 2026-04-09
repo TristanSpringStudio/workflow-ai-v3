@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import { Clock, Zap, User as UserIcon, Building2 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
-import { interviews, contributors, tasks } from "@/lib/mock-data";
+import { useCompanyData } from "@/lib/company-data";
 
 const DEPT_COLORS: Record<string, string> = {
   Marketing: "#a855f7", Sales: "#22c55e", Operations: "#f59e0b",
@@ -15,6 +15,7 @@ const DEPT_COLORS: Record<string, string> = {
 
 export default function InterviewDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { interviews, contributors, tasks } = useCompanyData();
   const interview = interviews.find((iv) => iv.id === id);
   if (!interview) notFound();
 

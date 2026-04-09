@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import { Clock, Zap, AlertTriangle, ArrowRight, Sparkles, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, Users, Share2, Headphones, Building2 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
-import { tasks, contributors, getDepartments, interviews } from "@/lib/mock-data";
+import { useCompanyData } from "@/lib/company-data";
 
 const DEPT_CONFIG: Record<string, { Icon: typeof DollarSign; bg: string; color: string }> = {
   Sales: { Icon: DollarSign, bg: "#22c55e", color: "#166534" },
@@ -24,6 +24,7 @@ const DEFAULT_CONFIG = { Icon: Building2, bg: "#6b7280", color: "#374151" };
 
 export default function DepartmentPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
+  const { tasks, contributors, interviews, getDepartments } = useCompanyData();
   const deptName = slug.charAt(0).toUpperCase() + slug.slice(1);
 
   const departments = getDepartments();

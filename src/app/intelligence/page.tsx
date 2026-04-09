@@ -6,7 +6,7 @@ import { List, Map } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
 import WorkflowCanvas from "@/components/WorkflowCanvas";
-import { tasks, getDepartments, contributors } from "@/lib/mock-data";
+import { useCompanyData } from "@/lib/company-data";
 
 const DEPT_COLORS: Record<string, string> = {
   Marketing: "#3b82f6", Sales: "#22c55e", Operations: "#f59e0b",
@@ -31,6 +31,7 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
 ];
 
 export default function IntelligencePage() {
+  const { tasks, contributors, getDepartments } = useCompanyData();
   const departments = getDepartments();
   const [sortBy, setSortBy] = useState<SortKey>("updated");
   const [sortOpen, setSortOpen] = useState(false);

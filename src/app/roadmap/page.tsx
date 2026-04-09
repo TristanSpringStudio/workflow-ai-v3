@@ -6,7 +6,7 @@ import { Zap, PiggyBank, Clock, DollarSign, Megaphone, TrendingUp, Wrench, Flask
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
 import ImplementationTray from "@/components/ImplementationTray";
-import { tasks, roadmap, company } from "@/lib/mock-data";
+import { useCompanyData } from "@/lib/company-data";
 import type { Task } from "@/lib/types";
 
 const ACTION_LABELS: Record<string, { label: string; dept: string }> = {
@@ -31,30 +31,34 @@ const DEPT_ICONS: Record<string, { Icon: typeof DollarSign; bg: string }> = {
 const LEVEL_ICONS = [Brain, Sparkles, Bot, Cpu];
 const LEVEL_COLORS = ["#3b82f6", "#6366f1", "#8b5cf6", "#7c3aed"];
 
-const LEVEL_SUMMARIES: Record<number, { summary: string; savings: string; implTime: string }> = {
+function getLevelSummaries(companyName: string): Record<number, { summary: string; savings: string; implTime: string }> {
+  return {
   1: {
-    summary: `At this level, individuals at ${company.name} start using AI as a thinking tool — for writing, research, and analysis. This is the entry point. No integrations needed. People use standalone AI tools to draft content, brainstorm ideas, and analyze information faster. The goal is to build familiarity and confidence with AI before embedding it into processes.`,
+    summary: `At this level, individuals at ${companyName} start using AI as a thinking tool — for writing, research, and analysis. This is the entry point. No integrations needed. People use standalone AI tools to draft content, brainstorm ideas, and analyze information faster. The goal is to build familiarity and confidence with AI before embedding it into processes.`,
     savings: "$75,200/yr",
     implTime: "2 hours",
   },
   2: {
-    summary: `Level 2 moves from standalone AI to AI embedded in ${company.name}'s daily workflows. AI now has company context — it knows your brand voice, your data sources, your processes. This is where cross-department handoffs get streamlined and the real time savings compound.`,
+    summary: `Level 2 moves from standalone AI to AI embedded in ${companyName}'s daily workflows. AI now has company context — it knows your brand voice, your data sources, your processes. This is where cross-department handoffs get streamlined and the real time savings compound.`,
     savings: "$15,600/yr",
     implTime: "4 hours",
   },
   3: {
-    summary: `At this level, AI agents handle recurring workflows at ${company.name} with human checkpoints built in. The agents run automatically — pulling data, generating reports, routing information — while humans review and approve. 10-40% of recurring work gets reclaimed.`,
+    summary: `At this level, AI agents handle recurring workflows at ${companyName} with human checkpoints built in. The agents run automatically — pulling data, generating reports, routing information — while humans review and approve. 10-40% of recurring work gets reclaimed.`,
     savings: "$28,800/yr",
     implTime: "8 hours",
   },
   4: {
-    summary: `The final level: AI runs critical, complex workflows across ${company.name}. Multi-agent orchestration handles end-to-end processes that previously required multiple people and manual coordination. This is the intelligence-native operating model.`,
+    summary: `The final level: AI runs critical, complex workflows across ${companyName}. Multi-agent orchestration handles end-to-end processes that previously required multiple people and manual coordination. This is the intelligence-native operating model.`,
     savings: "$50,000/yr",
     implTime: "Ongoing",
   },
 };
+}
 
 export default function RoadmapPage() {
+  const { tasks, roadmap, company } = useCompanyData();
+  const LEVEL_SUMMARIES = getLevelSummaries(company.name);
   const [trayTask, setTrayTask] = useState<{ task: Task; label: string } | null>(null);
 
   return (
