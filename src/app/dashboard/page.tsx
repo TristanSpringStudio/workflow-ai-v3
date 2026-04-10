@@ -3,18 +3,11 @@
 import { useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sun, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, User, Send, Users, Headphones } from "lucide-react";
+import { Sun, User, Send } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
 import { useCompanyData } from "@/lib/company-data";
-
-const DEPT_ICONS: Record<string, { Icon: typeof DollarSign; bg: string }> = {
-  Sales: { Icon: DollarSign, bg: "#22c55e" }, Marketing: { Icon: Megaphone, bg: "#a855f7" },
-  Finance: { Icon: TrendingUp, bg: "#3b52ce" }, Operations: { Icon: Wrench, bg: "#f59e0b" },
-  Engineering: { Icon: FlaskConical, bg: "#6366f1" }, Product: { Icon: PackageSearch, bg: "#ec4899" },
-  "Customer Success": { Icon: Headphones, bg: "#ca8a04" }, HR: { Icon: Users, bg: "#3b82f6" },
-  IT: { Icon: Users, bg: "#dc2626" }, Support: { Icon: Headphones, bg: "#ca8a04" },
-};
+import { getDeptIcon } from "@/lib/dept-icons";
 
 interface Finding {
   id: string;
@@ -31,8 +24,7 @@ interface Finding {
 }
 
 function DeptChip({ dept }: { dept: string }) {
-  const cfg = DEPT_ICONS[dept];
-  if (!cfg) return <span className="px-2 py-0.5 rounded-md border border-border text-[11px]">{dept}</span>;
+  const cfg = getDeptIcon(dept);
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-border text-[11px]">
       <span className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: cfg.bg }}><cfg.Icon className="w-2.5 h-2.5 text-white" strokeWidth={2} /></span>
@@ -213,10 +205,10 @@ export default function HomePage() {
           {/* Suggested questions */}
           <div className="flex flex-wrap gap-2 mb-12">
             {suggestedQuestions.map((q, i) => {
-              const cfg = DEPT_ICONS[q.dept];
+              const cfg = getDeptIcon(q.dept);
               return (
                 <button key={i} onClick={() => { setChatInput(q.label); inputRef.current?.focus(); }} className="flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] border border-border hover:border-muted-light transition-colors">
-                  {cfg && <span className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: cfg.bg }}><cfg.Icon className="w-2.5 h-2.5 text-white" strokeWidth={2} /></span>}
+                  <span className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: cfg.bg }}><cfg.Icon className="w-2.5 h-2.5 text-white" strokeWidth={2} /></span>
                   {q.label}
                 </button>
               );
@@ -283,10 +275,10 @@ export default function HomePage() {
                                 <p className="text-[11px] font-medium text-muted-light uppercase tracking-widest mb-2">Related workflows</p>
                                 <div className="flex flex-wrap gap-1.5">
                                   {finding.relatedWorkflows.map((wf) => {
-                                    const cfg = DEPT_ICONS[wf.dept];
+                                    const cfg = getDeptIcon(wf.dept);
                                     return (
                                       <Link key={wf.id} href={`/intelligence/${wf.id}`} className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-border text-[11px] hover:border-muted-light transition-colors">
-                                        {cfg && <span className="w-3.5 h-3.5 rounded flex items-center justify-center shrink-0" style={{ background: cfg.bg }}><cfg.Icon className="w-2 h-2 text-white" strokeWidth={2} /></span>}
+                                        <span className="w-3.5 h-3.5 rounded flex items-center justify-center shrink-0" style={{ background: cfg.bg }}><cfg.Icon className="w-2 h-2 text-white" strokeWidth={2} /></span>
                                         {wf.title}
                                       </Link>
                                     );
