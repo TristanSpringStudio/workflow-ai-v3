@@ -18,7 +18,9 @@ create table users (
   company_id uuid references companies(id) on delete cascade not null,
   email text not null,
   full_name text,
-  role text default 'admin', -- admin | member
+  job_title text,            -- role at the company (e.g. "Founder", "VP Eng")
+  avatar_url text,
+  role text default 'admin', -- platform role: admin | member
   created_at timestamptz default now()
 );
 

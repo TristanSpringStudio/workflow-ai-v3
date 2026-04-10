@@ -8,6 +8,7 @@ import {
   getInterviews,
   getRoadmap,
   getAssessment,
+  getUserProfile,
 } from "@/lib/supabase/queries";
 
 /**
@@ -35,15 +36,23 @@ export async function GET() {
       companyId = profile?.company_id || null;
     }
 
-    const [company, contributors, workflows, interviews, roadmap, assessment] =
-      await Promise.all([
-        getCompany(companyId || undefined),
-        getContributors(companyId || undefined),
-        getWorkflows(companyId || undefined),
-        getInterviews(companyId || undefined),
-        getRoadmap(companyId || undefined),
-        getAssessment(companyId || undefined),
-      ]);
+    const [
+      company,
+      contributors,
+      workflows,
+      interviews,
+      roadmap,
+      assessment,
+      userProfile,
+    ] = await Promise.all([
+      getCompany(companyId || undefined),
+      getContributors(companyId || undefined),
+      getWorkflows(companyId || undefined),
+      getInterviews(companyId || undefined),
+      getRoadmap(companyId || undefined),
+      getAssessment(companyId || undefined),
+      user ? getUserProfile(user.id) : Promise.resolve(null),
+    ]);
 
     return NextResponse.json({
       company,
@@ -52,6 +61,7 @@ export async function GET() {
       interviews,
       roadmap,
       assessment,
+      user: userProfile,
       companyId,
       isRealData: !!companyId,
     });
@@ -73,6 +83,7 @@ export async function GET() {
       interviews,
       roadmap,
       assessment: null,
+      user: null,
       companyId: null,
       isRealData: false,
     });

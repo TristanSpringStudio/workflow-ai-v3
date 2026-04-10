@@ -8,11 +8,40 @@ import {
   getDepartments as getMockDepartments,
   getStats as getMockStats,
 } from "@/lib/mock-data";
+import type { UserProfile } from "@/lib/types";
 
 /**
  * Data access layer with Supabase-first, mock-data fallback.
  * When real data exists, it's returned. When empty, mock data fills the gap.
  */
+
+/**
+ * Fetch the authenticated user's profile row from the `users` table.
+ * Returns null if not found. Uses the admin client so RLS doesn't block it
+ * from server routes.
+ */
+export async function getUserProfile(userId: string): Promise<UserProfile | null> {
+  if (!userId) return null;
+  try {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("users")
+      .select("id, email, full_name, job_title, avatar_url, role")
+      .eq("id", userId)
+      .single();
+    if (!data) return null;
+    return {
+      id: data.id,
+      email: data.email || "",
+      fullName: data.full_name || "",
+      jobTitle: data.job_title || "",
+      avatarUrl: data.avatar_url || undefined,
+      role: data.role || "admin",
+    };
+  } catch {
+    return null;
+  }
+}
 
 export async function getCompany(companyId?: string) {
   if (!companyId) return mockCompany;

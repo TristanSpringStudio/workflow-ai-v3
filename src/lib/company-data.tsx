@@ -10,7 +10,7 @@ import {
   getDepartments as getMockDepartments,
   getStats as getMockStats,
 } from "@/lib/mock-data";
-import type { Company, Contributor, Task, RoadmapPhase } from "@/lib/types";
+import type { Company, Contributor, Task, RoadmapPhase, UserProfile } from "@/lib/types";
 import { normalizeDepartment } from "@/lib/normalize-department";
 
 interface InterviewRecord {
@@ -27,6 +27,7 @@ interface InterviewRecord {
 
 interface CoreData {
   company: Company;
+  user: UserProfile | null;
   contributors: Contributor[];
   tasks: Task[];
   interviews: InterviewRecord[];
@@ -49,10 +50,12 @@ interface CoreData {
 interface CompanyData extends CoreData {
   refresh: () => Promise<void>;
   updateCompany: (company: Company) => void;
+  updateUser: (user: UserProfile) => void;
 }
 
 const defaultCore: CoreData = {
   company: mockCompany,
+  user: null,
   contributors: mockContributors,
   tasks: mockTasks,
   interviews: mockInterviews as unknown as InterviewRecord[],
@@ -69,6 +72,7 @@ const CompanyDataContext = createContext<CompanyData>({
   ...defaultCore,
   refresh: async () => {},
   updateCompany: () => {},
+  updateUser: () => {},
 });
 
 export function CompanyDataProvider({ children }: { children: ReactNode }) {
@@ -76,6 +80,10 @@ export function CompanyDataProvider({ children }: { children: ReactNode }) {
 
   const updateCompany = useCallback((company: Company) => {
     setCore((prev) => ({ ...prev, company }));
+  }, []);
+
+  const updateUser = useCallback((user: UserProfile) => {
+    setCore((prev) => ({ ...prev, user }));
   }, []);
 
   const fetchData = useCallback(async () => {
@@ -98,6 +106,7 @@ export function CompanyDataProvider({ children }: { children: ReactNode }) {
 
       setCore({
         company: json.company || mockCompany,
+        user: (json.user as UserProfile | null) || null,
         contributors: contributors.length > 0 ? contributors : mockContributors,
         tasks: tasks.length > 0 ? tasks : mockTasks,
         interviews: interviewsWithPersons.length > 0 ? interviewsWithPersons : (mockInterviews as unknown as InterviewRecord[]),
@@ -179,8 +188,8 @@ export function CompanyDataProvider({ children }: { children: ReactNode }) {
   }, [fetchData]);
 
   const value = useMemo<CompanyData>(
-    () => ({ ...core, refresh: fetchData, updateCompany }),
-    [core, fetchData, updateCompany]
+    () => ({ ...core, refresh: fetchData, updateCompany, updateUser }),
+    [core, fetchData, updateCompany, updateUser]
   );
 
   return (

@@ -8,6 +8,16 @@ export interface Company {
   createdAt: string;
 }
 
+// ─── User (the authenticated admin using the app) ───
+export interface UserProfile {
+  id: string;
+  email: string;
+  fullName: string;
+  jobTitle: string;
+  avatarUrl?: string;
+  role: string; // platform role: admin | member
+}
+
 // ─── Contributor (employee) ───
 export interface Contributor {
   id: string;
