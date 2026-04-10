@@ -7,6 +7,7 @@ import { AlertTriangle, ArrowRight, DollarSign, Megaphone, TrendingUp, Wrench, F
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
 import { useCompanyData } from "@/lib/company-data";
+import { matchesDeptSlug } from "@/lib/department-slug";
 
 const DEPT_CONFIG: Record<string, { Icon: typeof DollarSign; bg: string }> = {
   Sales: { Icon: DollarSign, bg: "#22c55e" },
@@ -31,10 +32,25 @@ function parseHours(s: string): number {
 
 export default function DepartmentPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
-  const { tasks, contributors, interviews, getDepartments } = useCompanyData();
+  const { tasks, contributors, interviews, getDepartments, loading } = useCompanyData();
 
   const departments = getDepartments();
-  const dept = departments.find((d) => d.name.toLowerCase() === slug.toLowerCase());
+  // Resolve via the slug helper so "Customer Success" → "customer-success"
+  // (and any other space/symbol-heavy name) round-trips correctly.
+  const dept = departments.find((d) => matchesDeptSlug(d.name, slug));
+
+  // While the initial company-data fetch is in flight, AppShell is already
+  // showing a skeleton in place of `children`, so this component never
+  // actually paints. Return a harmless shell to avoid calling notFound()
+  // before the real data arrives.
+  if (loading) {
+    return (
+      <AppShell>
+        <div />
+      </AppShell>
+    );
+  }
+
   if (!dept) notFound();
 
   // Case-insensitive department match so mixed-casing rows in the DB

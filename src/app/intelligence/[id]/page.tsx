@@ -4,10 +4,11 @@ import { use, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Sun, CheckCircle2, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch } from "lucide-react";
+import { Sun, CheckCircle2, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, Radio } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
 import { useCompanyData } from "@/lib/company-data";
+import { deptToSlug } from "@/lib/department-slug";
 import type { TaskStep } from "@/lib/types";
 
 const TOOL_DOMAINS: Record<string, string> = {
@@ -60,7 +61,7 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
       <div className="flex-1 flex flex-col min-h-0">
         <PageHeader
           title={task.title}
-          breadcrumbs={[{ label: "Company Intelligence", href: "/intelligence", icon: "M9.348 14.651a3.75 3.75 0 010-5.303m5.304 0a3.75 3.75 0 010 5.303m-7.425 2.122a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M5.106 18.894c-3.808-3.808-3.808-9.98 0-13.789m13.788 0c3.808 3.808 3.808 9.981 0 13.79M12 12h.008v.007H12V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" }]}
+          breadcrumbs={[{ label: "Company Intelligence", href: "/intelligence", icon: Radio }]}
         />
 
         {/* Tabs bar */}
@@ -153,7 +154,7 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
                   {/* Department */}
                   <div className="mb-6">
                     <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Department</h3>
-                    <Link href={`/departments/${task.department.toLowerCase()}`} className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border hover:border-muted-light transition-colors">
+                    <Link href={`/departments/${deptToSlug(task.department)}`} className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border hover:border-muted-light transition-colors">
                       <div className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: deptIcon?.bg || "#6b7280" }}>
                         <DeptIcon className="w-2.5 h-2.5 text-white" strokeWidth={2} />
                       </div>

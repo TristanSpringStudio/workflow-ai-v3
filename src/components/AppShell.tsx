@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Home, Radio, ClipboardList, Sun, Settings, ChevronRight, DollarSign, Megaphone, TrendingUp, Users, Share2, Headphones, Wrench, PackageSearch, FlaskConical, MessageSquare, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useCompanyData } from "@/lib/company-data";
+import { deptToSlug } from "@/lib/department-slug";
 import CommandPalette from "@/components/CommandPalette";
 import { Skeleton, ContentSkeleton } from "@/components/Skeleton";
 
@@ -108,7 +109,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     return (
                       <Link
                         key={dept.name}
-                        href={`/departments/${dept.name.toLowerCase()}`}
+                        href={`/departments/${deptToSlug(dept.name)}`}
                         className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[12px] text-muted hover:text-foreground hover:bg-foreground/[0.03] transition-colors"
                       >
                         <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ background: cfg.bg }}>

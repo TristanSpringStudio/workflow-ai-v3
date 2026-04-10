@@ -16,6 +16,7 @@ import {
   Plus,
 } from "lucide-react";
 import { useCompanyData } from "@/lib/company-data";
+import { deptToSlug } from "@/lib/department-slug";
 
 type ItemKind = "nav" | "workflow" | "person" | "department" | "action" | "ai";
 
@@ -127,7 +128,7 @@ export default function CommandPalette() {
         label: c.name,
         sublabel: `${c.role} · ${c.department}`,
         Icon: Users,
-        onSelect: () => navigate(`/departments/${c.department.toLowerCase()}`),
+        onSelect: () => navigate(`/departments/${deptToSlug(c.department)}`),
       });
     }
 
@@ -143,7 +144,7 @@ export default function CommandPalette() {
         label: d.name,
         sublabel: `${d.taskCount} workflows`,
         Icon: Users,
-        onSelect: () => navigate(`/departments/${d.name.toLowerCase()}`),
+        onSelect: () => navigate(`/departments/${deptToSlug(d.name)}`),
       });
     }
 
