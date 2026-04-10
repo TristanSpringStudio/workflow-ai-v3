@@ -4,10 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Radio, ClipboardList, Sun, Settings, ChevronRight, DollarSign, Megaphone, TrendingUp, Users, Share2, Headphones, Wrench, PackageSearch, FlaskConical, MessageSquare, LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useCompanyData } from "@/lib/company-data";
 import CommandPalette from "@/components/CommandPalette";
+import { Skeleton, ContentSkeleton } from "@/components/Skeleton";
 
 const DEPT_CONFIG: Record<string, { color: string; bg: string; Icon: typeof DollarSign }> = {
   Sales: { color: "#ffffff", bg: "#22c55e", Icon: DollarSign },
@@ -33,7 +33,7 @@ const NAV_ITEMS = [
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { company, getDepartments } = useCompanyData();
+  const { company, getDepartments, loading } = useCompanyData();
   const departments = getDepartments();
   const [deptsOpen, setDeptsOpen] = useState(true);
 
@@ -43,19 +43,29 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <div className="w-[220px] shrink-0 border-r border-border flex flex-col bg-surface/30">
         {/* Company logo */}
         <div className="h-14 px-4 flex items-center gap-2.5 border-b border-border">
-          {company.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={company.logoUrl}
-              alt={`${company.name} logo`}
-              className="w-7 h-7 rounded-lg object-cover bg-surface border border-border shrink-0"
-            />
+          {loading ? (
+            <>
+              <Skeleton className="w-7 h-7 rounded-lg shrink-0" />
+              <Skeleton className="h-4 w-24" />
+            </>
+          ) : company.logoUrl ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={company.logoUrl}
+                alt={`${company.name} logo`}
+                className="w-7 h-7 rounded-lg object-cover bg-surface border border-border shrink-0"
+              />
+              <span className="text-[14px] font-semibold tracking-tight truncate">{company.name}</span>
+            </>
           ) : (
-            <div className="w-7 h-7 rounded-lg bg-foreground flex items-center justify-center text-[11px] font-bold text-background shrink-0">
-              {company.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
-            </div>
+            <>
+              <div className="w-7 h-7 rounded-lg bg-foreground flex items-center justify-center text-[11px] font-bold text-background shrink-0">
+                {company.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+              </div>
+              <span className="text-[14px] font-semibold tracking-tight truncate">{company.name}</span>
+            </>
           )}
-          <span className="text-[14px] font-semibold tracking-tight truncate">{company.name}</span>
         </div>
 
         {/* Nav */}
@@ -84,21 +94,31 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </button>
             {deptsOpen && (
               <div className="mt-1.5 space-y-0.5">
-                {departments.map((dept) => {
-                  const cfg = DEPT_CONFIG[dept.name] || DEFAULT_DEPT;
-                  return (
-                    <Link
-                      key={dept.name}
-                      href={`/departments/${dept.name.toLowerCase()}`}
-                      className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[12px] text-muted hover:text-foreground hover:bg-foreground/[0.03] transition-colors"
-                    >
-                      <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ background: cfg.bg }}>
-                        <cfg.Icon className="w-3 h-3" style={{ color: cfg.color }} strokeWidth={2} />
-                      </div>
-                      {dept.name}
-                    </Link>
-                  );
-                })}
+                {loading ? (
+                  // Skeleton rows while the first fetch is in flight
+                  [0, 1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center gap-2.5 px-2.5 py-1.5">
+                      <Skeleton className="w-5 h-5 rounded-md shrink-0" />
+                      <Skeleton className="h-3 flex-1" />
+                    </div>
+                  ))
+                ) : (
+                  departments.map((dept) => {
+                    const cfg = DEPT_CONFIG[dept.name] || DEFAULT_DEPT;
+                    return (
+                      <Link
+                        key={dept.name}
+                        href={`/departments/${dept.name.toLowerCase()}`}
+                        className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[12px] text-muted hover:text-foreground hover:bg-foreground/[0.03] transition-colors"
+                      >
+                        <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ background: cfg.bg }}>
+                          <cfg.Icon className="w-3 h-3" style={{ color: cfg.color }} strokeWidth={2} />
+                        </div>
+                        {dept.name}
+                      </Link>
+                    );
+                  })
+                )}
               </div>
             )}
           </div>
@@ -125,9 +145,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {children}
-      </div>
+      {loading ? (
+        // Generic content skeleton during the initial fetch. Once loading
+        // flips to false, each page's own content (with its own empty /
+        // loaded states) takes over.
+        <ContentSkeleton />
+      ) : (
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {children}
+        </div>
+      )}
 
       {/* Command palette (⌘K) — globally mounted */}
       <CommandPalette />
