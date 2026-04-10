@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { User, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, Headphones, Users } from "lucide-react";
 import { useCompanyData } from "@/lib/company-data";
@@ -57,11 +58,51 @@ function WorkflowChip({ title, task }: { title: string; task?: Task }) {
 }
 
 /**
+ * Renders inline markdown: **bold**, *italic*, `code`
+ */
+function renderMarkdown(text: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  // Match **bold**, *italic*, `code`
+  const mdRegex = /(\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`)/g;
+
+  let lastIdx = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = mdRegex.exec(text)) !== null) {
+    if (match.index > lastIdx) {
+      nodes.push(text.slice(lastIdx, match.index));
+    }
+
+    if (match[2]) {
+      // **bold**
+      nodes.push(<strong key={`b${match.index}`} className="font-semibold text-foreground">{match[2]}</strong>);
+    } else if (match[3]) {
+      // *italic*
+      nodes.push(<em key={`i${match.index}`}>{match[3]}</em>);
+    } else if (match[4]) {
+      // `code`
+      nodes.push(<code key={`c${match.index}`} className="px-1.5 py-0.5 rounded bg-surface border border-border text-[12px] font-mono">{match[4]}</code>);
+    }
+
+    lastIdx = match.index + match[0].length;
+  }
+
+  if (lastIdx < text.length) {
+    nodes.push(text.slice(lastIdx));
+  }
+
+  return nodes;
+}
+
+/**
  * Parses and renders AI assistant messages with interactive chips.
  *
  * Syntax:
  * - @[Person Name] → PersonChip
  * - #[Workflow Title] → WorkflowChip (linked)
+ * - **bold** → <strong>
+ * - *italic* → <em>
+ * - `code` → <code>
  */
 export default function RichMessage({ content }: { content: string }) {
   const { tasks, contributors } = useCompanyData();
@@ -73,7 +114,7 @@ export default function RichMessage({ content }: { content: string }) {
     <>
       {segments.map((seg, i) => {
         if (seg.type === "text") {
-          return <span key={i}>{seg.value}</span>;
+          return <span key={i}>{renderMarkdown(seg.value)}</span>;
         }
 
         if (seg.type === "person") {

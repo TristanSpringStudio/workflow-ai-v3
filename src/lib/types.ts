@@ -4,6 +4,7 @@ export interface Company {
   name: string;
   industry: string;
   size: string;
+  logoUrl?: string;
   createdAt: string;
 }
 

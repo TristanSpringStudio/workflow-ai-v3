@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Sparkles, Eye, CheckCircle2, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch } from "lucide-react";
+import { Sun, CheckCircle2, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
 import { useCompanyData } from "@/lib/company-data";
@@ -45,13 +45,14 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
   const rec = task.recommendation;
   const displaySteps = aiRecsOn && rec ? rec.newSteps : task.steps;
 
-  const TABS: { key: Tab; label: string }[] = [
+  const hasImplementation = !!rec?.implementation;
+  const TABS: { key: Tab; label: string; highlight?: boolean; disabled?: boolean }[] = [
     { key: "details", label: "Details" },
     { key: "map", label: "Map" },
     { key: "knowledge", label: "Knowledge" },
     { key: "dependencies", label: "Dependencies" },
     { key: "assessment", label: "Our Assessment" },
-    ...(rec?.implementation ? [{ key: "implementation" as Tab, label: "Implementation" }] : []),
+    { key: "implementation", label: "AI Implementation", highlight: true, disabled: !hasImplementation },
   ];
 
   return (
@@ -68,11 +69,22 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
             {TABS.map((t) => (
               <button
                 key={t.key}
-                onClick={() => setTab(t.key)}
-                className={`px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors ${
-                  tab === t.key ? "bg-foreground/5 text-foreground" : "text-muted hover:text-foreground"
+                onClick={() => !t.disabled && setTab(t.key)}
+                disabled={t.disabled}
+                className={`relative px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors flex items-center gap-1.5 ${
+                  t.disabled
+                    ? "text-muted-light/50 cursor-not-allowed"
+                    : t.highlight
+                      ? tab === t.key
+                        ? "bg-pink-50 text-pink-600"
+                        : "text-pink-500 hover:bg-pink-50/50 hover:text-pink-600"
+                      : tab === t.key
+                        ? "bg-foreground/5 text-foreground"
+                        : "text-muted hover:text-foreground"
                 }`}
+                {...(t.disabled ? { "data-tooltip": "No AI recommendations for this workflow yet" } : {})}
               >
+                {t.highlight && <Sun className="w-3.5 h-3.5" strokeWidth={2} />}
                 {t.label}
               </button>
             ))}
@@ -223,7 +235,7 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
                               <div className="flex items-center gap-1.5">
                                 {aiRecsOn && isAi && (
                                   <span className="w-5 h-5 rounded-full bg-pink-400 flex items-center justify-center">
-                                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25" /></svg>
+                                    <Sun className="w-3 h-3 text-white" strokeWidth={2} />
                                   </span>
                                 )}
                                 {!aiRecsOn && (
@@ -260,9 +272,9 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
                     }`}
                   >
                     {aiRecsOn ? (
-                      <Eye className="w-4 h-4" />
+                      <Sun className="w-4 h-4" />
                     ) : (
-                      <Sparkles className="w-4 h-4" />
+                      <Sun className="w-4 h-4" />
                     )}
                     AI Recommendations {aiRecsOn ? "On" : "Off"}
                   </button>
@@ -380,19 +392,7 @@ export default function WorkflowInteriorPage({ params }: { params: Promise<{ id:
                   </>
                 )}
 
-                {/* Documented by */}
-                {(() => {
-                  const addedBy = contributors.find((c) => c.id === task.addedBy);
-                  return addedBy ? (
-                    <div className="mt-10">
-                      <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Documented by</h3>
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface border border-border text-[12px]">
-                        <svg className="w-3 h-3 text-muted-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" /></svg>
-                        {addedBy.name}
-                      </span>
-                    </div>
-                  ) : null;
-                })()}
+{/* Documented by — removed, citations only */}
               </div>
             </div>
           )}

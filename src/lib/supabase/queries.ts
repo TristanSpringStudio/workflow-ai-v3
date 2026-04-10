@@ -25,7 +25,15 @@ export async function getCompany(companyId?: string) {
       .eq("id", companyId)
       .single();
 
-    return data || mockCompany;
+    if (!data) return mockCompany;
+    return {
+      id: data.id,
+      name: data.name,
+      industry: data.industry || "",
+      size: data.size || "",
+      logoUrl: data.logo_url || undefined,
+      createdAt: data.created_at,
+    };
   } catch {
     return mockCompany;
   }
@@ -207,6 +215,42 @@ export async function getAssessment(companyId?: string) {
     return data;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Return the distinct set of department names for a company, drawn from
+ * both the contributors and workflows tables. Used to power the dynamic
+ * department picker shown to interviewees so misspellings and casing
+ * mismatches don't fragment the org.
+ *
+ * Returns canonical casing (first non-empty value seen wins on conflict).
+ */
+export async function getDistinctDepartments(companyId: string): Promise<string[]> {
+  if (!companyId) return [];
+  try {
+    const supabase = createAdminClient();
+    const [contribs, workflows] = await Promise.all([
+      supabase.from("contributors").select("department").eq("company_id", companyId),
+      supabase.from("workflows").select("department").eq("company_id", companyId),
+    ]);
+
+    // Map of lowercased key → first canonical-cased value seen
+    const seen = new Map<string, string>();
+    const ingest = (rows: { department: string | null }[] | null) => {
+      for (const row of rows || []) {
+        const dept = (row.department || "").trim();
+        if (!dept) continue;
+        const key = dept.toLowerCase();
+        if (!seen.has(key)) seen.set(key, dept);
+      }
+    };
+    ingest(contribs.data);
+    ingest(workflows.data);
+
+    return Array.from(seen.values()).sort((a, b) => a.localeCompare(b));
+  } catch {
+    return [];
   }
 }
 

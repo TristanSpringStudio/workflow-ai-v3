@@ -4,6 +4,7 @@ import {
   getOpeningMessage,
   type ChatMessage,
 } from "@/lib/ai/pipeline/interview-agent";
+import { getDistinctDepartments } from "@/lib/supabase/queries";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +13,20 @@ export async function POST(request: NextRequest) {
       messages,
       companyName = "your company",
       userName,
-    }: { messages: ChatMessage[]; companyName?: string; userName?: string } = body;
+      companyId,
+    }: {
+      messages: ChatMessage[];
+      companyName?: string;
+      userName?: string;
+      companyId?: string;
+    } = body;
+
+    // Fetch the company's existing departments so the AI can offer them
+    // as quick-select chips. Empty list is fine — the AI will just ask
+    // open-endedly for the first interviewee in a fresh org.
+    const existingDepartments = companyId
+      ? await getDistinctDepartments(companyId)
+      : [];
 
     // If no messages, return the opening message
     if (!messages || messages.length === 0) {
@@ -21,7 +35,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Process the conversation turn
-    const result = await processInterviewTurn(messages, companyName);
+    const result = await processInterviewTurn(
+      messages,
+      companyName,
+      existingDepartments,
+      userName
+    );
 
     return NextResponse.json(result);
   } catch (error) {

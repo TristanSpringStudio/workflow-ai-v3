@@ -3,10 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Radio, ClipboardList, Sparkles, Settings, ChevronRight, DollarSign, Megaphone, TrendingUp, Users, Share2, Headphones, Wrench, PackageSearch, FlaskConical, MessageSquare, LogOut } from "lucide-react";
+import { Home, Radio, ClipboardList, Sun, Settings, ChevronRight, DollarSign, Megaphone, TrendingUp, Users, Share2, Headphones, Wrench, PackageSearch, FlaskConical, MessageSquare, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useCompanyData } from "@/lib/company-data";
+import CommandPalette from "@/components/CommandPalette";
 
 const DEPT_CONFIG: Record<string, { color: string; bg: string; Icon: typeof DollarSign }> = {
   Sales: { color: "#ffffff", bg: "#22c55e", Icon: DollarSign },
@@ -27,7 +28,7 @@ const NAV_ITEMS = [
   { label: "Company Intelligence", href: "/intelligence", Icon: Radio },
   { label: "Interviews", href: "/interviews", Icon: MessageSquare },
   { label: "Implementation Plan", href: "/roadmap", Icon: ClipboardList },
-  { label: "AI Assistant", href: "/ai-assistant", Icon: Sparkles },
+  { label: "AI Assistant", href: "/ai-assistant", Icon: Sun },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -42,10 +43,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <div className="w-[220px] shrink-0 border-r border-border flex flex-col bg-surface/30">
         {/* Company logo */}
         <div className="h-14 px-4 flex items-center gap-2.5 border-b border-border">
-          <div className="w-7 h-7 rounded-lg bg-foreground flex items-center justify-center text-[11px] font-bold text-background">
-            {company.name.split(" ").map((w) => w[0]).join("")}
-          </div>
-          <span className="text-[14px] font-semibold tracking-tight">{company.name}</span>
+          {company.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={company.logoUrl}
+              alt={`${company.name} logo`}
+              className="w-7 h-7 rounded-lg object-cover bg-surface border border-border shrink-0"
+            />
+          ) : (
+            <div className="w-7 h-7 rounded-lg bg-foreground flex items-center justify-center text-[11px] font-bold text-background shrink-0">
+              {company.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+            </div>
+          )}
+          <span className="text-[14px] font-semibold tracking-tight truncate">{company.name}</span>
         </div>
 
         {/* Nav */}
@@ -118,6 +128,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {children}
       </div>
+
+      {/* Command palette (⌘K) — globally mounted */}
+      <CommandPalette />
     </div>
   );
 }

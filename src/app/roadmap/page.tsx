@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Zap, PiggyBank, Clock, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, Brain, Bot, Cpu, Sparkles } from "lucide-react";
+import { Zap, PiggyBank, Clock, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, Brain, Bot, Cpu, Sun } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
 import ImplementationTray from "@/components/ImplementationTray";
@@ -19,7 +19,7 @@ const DEPT_ICONS: Record<string, { Icon: typeof DollarSign; bg: string }> = {
   Engineering: { Icon: FlaskConical, bg: "#6366f1" }, Product: { Icon: PackageSearch, bg: "#ec4899" },
 };
 
-const LEVEL_ICONS = [Brain, Sparkles, Bot, Cpu];
+const LEVEL_ICONS = [Brain, Sun, Bot, Cpu];
 const LEVEL_COLORS = ["#3b82f6", "#6366f1", "#8b5cf6", "#7c3aed"];
 
 function getLevelSummaries(companyName: string): Record<number, { summary: string; savings: string; implTime: string }> {

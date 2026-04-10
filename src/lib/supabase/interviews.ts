@@ -1,4 +1,6 @@
 import { createAdminClient } from "./server";
+import { normalizeDepartment } from "@/lib/normalize-department";
+import { getDistinctDepartments } from "@/lib/supabase/queries";
 
 /**
  * Look up an interview token and return associated data.
@@ -16,7 +18,7 @@ export async function lookupToken(token: string) {
       status,
       company_id,
       contributor_id,
-      companies ( id, name ),
+      companies ( id, name, logo_url ),
       contributors ( id, name, email, role, department )
     `)
     .eq("token", token)
@@ -114,6 +116,14 @@ export async function completeInterview(params: {
 }) {
   const supabase = createAdminClient();
 
+  // Normalize the department against the company's existing departments so
+  // "marketing" / "Marketing" / "MARKETING" all collapse to one canonical name.
+  const existingDepts = await getDistinctDepartments(params.companyId);
+  const normalizedDepartment = normalizeDepartment(
+    params.extractedData.department,
+    existingDepts
+  );
+
   // 1. Create or update the contributor
   let contributorId: string | null = null;
 
@@ -132,7 +142,7 @@ export async function completeInterview(params: {
       .update({
         name: params.extractedData.name || undefined,
         role: params.extractedData.role || undefined,
-        department: params.extractedData.department || undefined,
+        department: normalizedDepartment || undefined,
         ai_comfort: params.extractedData.aiComfort || undefined,
         interviewed_at: new Date().toISOString(),
       })
@@ -145,7 +155,7 @@ export async function completeInterview(params: {
         company_id: params.companyId,
         name: params.extractedData.name,
         role: params.extractedData.role || null,
-        department: params.extractedData.department || null,
+        department: normalizedDepartment || null,
         ai_comfort: params.extractedData.aiComfort || null,
         interviewed_at: new Date().toISOString(),
       })

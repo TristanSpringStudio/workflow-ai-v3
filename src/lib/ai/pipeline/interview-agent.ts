@@ -19,12 +19,31 @@ export interface ChatMessage {
  */
 export async function processInterviewTurn(
   messages: ChatMessage[],
-  companyName: string
+  companyName: string,
+  existingDepartments: string[] = [],
+  knownName?: string
 ): Promise<InterviewTurnOutputType> {
-  // Load and compose the system prompt
+  // Load and compose the system prompt. We pass the company's existing
+  // departments so the AI can offer them as `suggestedOptions` during warmup
+  // and avoid spelling/casing mismatches that would fragment the org.
+  const departmentList =
+    existingDepartments.length > 0
+      ? existingDepartments.map((d) => `- ${d}`).join("\n")
+      : "(none yet — this is the first interview for this company)";
+
+  // If we already know the person's name from the welcome screen, tell the
+  // AI explicitly so it doesn't re-ask or ignore that context mid-conversation.
+  const knownNameBlock = knownName && knownName.trim().length > 0
+    ? `**The person you're talking to is named ${knownName.trim()}.** You already know this from the welcome screen — do NOT ask for their name again. Use it naturally and carry it forward in \`extractedSoFar.name\` from turn 1.`
+    : `You do not know the person's name yet — ask for it in Phase 1.`;
+
   const systemPrompt = await loadPrompts(
     ["interview-system.md", "interview-probing.md"],
-    { company_name: companyName }
+    {
+      company_name: companyName,
+      existing_departments: departmentList,
+      known_name: knownNameBlock,
+    }
   );
 
   // Call Claude Haiku

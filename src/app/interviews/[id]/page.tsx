@@ -1,9 +1,9 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Clock, Zap, User as UserIcon, Building2 } from "lucide-react";
+import { Sun, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
 import { useCompanyData } from "@/lib/company-data";
@@ -11,6 +11,12 @@ import { useCompanyData } from "@/lib/company-data";
 const DEPT_COLORS: Record<string, string> = {
   Marketing: "#a855f7", Sales: "#22c55e", Operations: "#f59e0b",
   Engineering: "#6366f1", Product: "#ec4899", Finance: "#3b52ce",
+};
+
+const DEPT_ICONS: Record<string, { Icon: typeof DollarSign; bg: string }> = {
+  Sales: { Icon: DollarSign, bg: "#22c55e" }, Marketing: { Icon: Megaphone, bg: "#a855f7" },
+  Finance: { Icon: TrendingUp, bg: "#3b52ce" }, Operations: { Icon: Wrench, bg: "#f59e0b" },
+  Engineering: { Icon: FlaskConical, bg: "#6366f1" }, Product: { Icon: PackageSearch, bg: "#ec4899" },
 };
 
 export default function InterviewDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -24,6 +30,10 @@ export default function InterviewDetailPage({ params }: { params: Promise<{ id: 
 
   const deptColor = DEPT_COLORS[person.department] || "#6b7280";
   const relatedTasks = tasks.filter((t) => t.contributors.includes(person.id));
+  const deptIcon = DEPT_ICONS[person.department];
+  const DeptIcon = deptIcon?.Icon || Wrench;
+  const [transcriptExpanded, setTranscriptExpanded] = useState(false);
+  const hasTranscript = !!(interview.transcript && interview.transcript.length > 0);
 
   return (
     <AppShell>
@@ -33,110 +43,137 @@ export default function InterviewDetailPage({ params }: { params: Promise<{ id: 
       />
 
       <div className="flex-1 overflow-y-auto scroll-thin">
-        <div className="max-w-3xl mx-auto px-8 py-8">
-          {/* Profile card */}
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-14 h-14 rounded-xl flex items-center justify-center text-[18px] font-bold text-white" style={{ background: deptColor }}>
+        <div className="max-w-2xl mx-auto px-8 py-10">
+
+          {/* Profile header */}
+          <div className="flex items-center gap-4 mb-10">
+            <div className="w-14 h-14 rounded-xl flex items-center justify-center text-[18px] font-bold text-white shrink-0" style={{ background: deptColor }}>
               {person.name.charAt(0)}{person.name.split(" ")[1]?.[0]}
             </div>
             <div>
-              <h2 className="text-[18px] font-semibold">{person.name}</h2>
+              <h2 className="text-[22px] font-semibold tracking-tight">{person.name}</h2>
               <p className="text-[13px] text-muted">{person.role} · {person.department}</p>
             </div>
           </div>
 
-          {/* Meta stats */}
-          <div className="grid grid-cols-4 gap-4 mb-8">
-            <div className="p-3 rounded-xl border border-border">
-              <div className="flex items-center gap-1.5 text-muted-light mb-1">
-                <Clock className="w-3 h-3" strokeWidth={1.5} />
-                <span className="text-[10px] uppercase tracking-widest">Duration</span>
-              </div>
-              <p className="text-[14px] font-semibold">{interview.duration}</p>
+          {/* Stats row */}
+          <div className="border-t border-border" />
+          <div className="grid grid-cols-3 py-6">
+            <div>
+              <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-1.5">Completed</p>
+              <p className="text-[15px] font-medium">
+                {interview.completedAt
+                  ? new Date(interview.completedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                  : "—"}
+              </p>
             </div>
-            <div className="p-3 rounded-xl border border-border">
-              <div className="flex items-center gap-1.5 text-muted-light mb-1">
-                <Zap className="w-3 h-3" strokeWidth={1.5} />
-                <span className="text-[10px] uppercase tracking-widest">Workflows</span>
-              </div>
-              <p className="text-[14px] font-semibold">{interview.workflowsExtracted} extracted</p>
+            <div>
+              <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-1.5">Workflows extracted</p>
+              <p className="text-[15px] font-medium">{interview.workflowsExtracted}</p>
             </div>
-            <div className="p-3 rounded-xl border border-border">
-              <div className="flex items-center gap-1.5 text-muted-light mb-1">
-                <Building2 className="w-3 h-3" strokeWidth={1.5} />
-                <span className="text-[10px] uppercase tracking-widest">Department</span>
-              </div>
-              <p className="text-[14px] font-semibold">{person.department}</p>
+            <div>
+              <p className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-1.5">AI comfort</p>
+              <p className="text-[15px] font-medium capitalize">{person.aiComfort}</p>
             </div>
-            <div className="p-3 rounded-xl border border-border">
-              <div className="flex items-center gap-1.5 text-muted-light mb-1">
-                <UserIcon className="w-3 h-3" strokeWidth={1.5} />
-                <span className="text-[10px] uppercase tracking-widest">AI comfort</span>
+          </div>
+          <div className="border-t border-border mb-10" />
+
+          {/* Department */}
+          <div className="mb-6">
+            <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Department</h3>
+            <Link href={`/departments/${person.department.toLowerCase()}`} className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border hover:border-muted-light transition-colors">
+              <div className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: deptIcon?.bg || "#6b7280" }}>
+                <DeptIcon className="w-2.5 h-2.5 text-white" strokeWidth={2} />
               </div>
-              <p className="text-[14px] font-semibold capitalize">{person.aiComfort}</p>
-            </div>
+              <span className="text-[12px] group-hover:text-accent transition-colors">{person.department}</span>
+            </Link>
           </div>
 
           {/* Extracted workflows */}
           {relatedTasks.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-[13px] font-semibold mb-3">Workflows extracted from this interview</h3>
-              <div className="space-y-1.5">
-                {relatedTasks.map((task) => (
-                  <Link
-                    key={task.id}
-                    href={`/intelligence/${task.id}`}
-                    className="group flex items-center justify-between p-3 rounded-lg border border-border hover:border-muted-light transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full" style={{ background: deptColor }} />
-                      <span className="text-[13px] group-hover:text-accent transition-colors">{task.title}</span>
-                    </div>
-                    <span className="text-[11px] text-muted-light">{task.frequency} · {task.timeSpent}</span>
-                  </Link>
-                ))}
+            <div className="mb-6">
+              <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Workflows extracted</h3>
+              <div className="flex flex-wrap gap-1.5">
+                {relatedTasks.map((task) => {
+                  const tDeptIcon = DEPT_ICONS[task.department];
+                  const TIcon = tDeptIcon?.Icon || Wrench;
+                  return (
+                    <Link
+                      key={task.id}
+                      href={`/intelligence/${task.id}`}
+                      className="group flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border hover:border-muted-light transition-colors"
+                    >
+                      <div className="w-4 h-4 rounded flex items-center justify-center shrink-0" style={{ background: tDeptIcon?.bg || "#6b7280" }}>
+                        <TIcon className="w-2.5 h-2.5 text-white" strokeWidth={2} />
+                      </div>
+                      <span className="text-[12px] group-hover:text-accent transition-colors">{task.title}</span>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           )}
 
           {/* Transcript */}
-          <div>
-            <h3 className="text-[13px] font-semibold mb-4">Full transcript</h3>
-            <div className="rounded-2xl border border-border p-6 space-y-4">
-              {interview.transcript ? (
-                interview.transcript.map((msg, i) => (
-                  <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                    {msg.role === "assistant" && (
-                      <div className="shrink-0 w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center mr-2 mt-0.5">
-                        <svg className="w-3 h-3 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25" /></svg>
+          <div className="mb-6">
+            <h3 className="text-[11px] font-semibold text-muted-light uppercase tracking-widest mb-3">Transcript</h3>
+            <div className="relative">
+              <div className={`rounded-2xl border border-border p-6 space-y-4 overflow-hidden ${transcriptExpanded ? "" : "max-h-[480px]"}`}>
+                {hasTranscript ? (
+                  interview.transcript!.map((msg, i) => (
+                    <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                      {msg.role === "assistant" && (
+                        <div className="shrink-0 w-6 h-6 rounded-full bg-surface border border-border flex items-center justify-center mr-2 mt-0.5">
+                          <Sun className="w-3 h-3 text-muted" strokeWidth={2} />
+                        </div>
+                      )}
+                      <div className={`max-w-[80%] ${
+                        msg.role === "user"
+                          ? "px-3.5 py-2 rounded-2xl rounded-br-md bg-surface border border-border text-[13px]"
+                          : "text-[13px] text-muted leading-relaxed"
+                      }`}>
+                        {msg.content}
                       </div>
-                    )}
-                    <div className={`max-w-[80%] ${
-                      msg.role === "user"
-                        ? "px-3.5 py-2 rounded-2xl rounded-br-md bg-surface border border-border text-[13px]"
-                        : "text-[13px] text-muted leading-relaxed"
-                    }`}>
-                      {msg.content}
+                      {msg.role === "user" && (
+                        <div className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center ml-2 mt-0.5 text-[8px] font-bold" style={{ background: deptColor, color: "white" }}>
+                          {person.name.charAt(0)}
+                        </div>
+                      )}
                     </div>
-                    {msg.role === "user" && (
-                      <div className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center ml-2 mt-0.5 text-[8px] font-bold" style={{ background: deptColor, color: "white" }}>
-                        {person.name.charAt(0)}
-                      </div>
-                    )}
+                  ))
+                ) : (
+                  <p className="text-[13px] text-muted-light text-center py-8">Transcript not available for this interview.</p>
+                )}
+              </div>
+
+              {/* Fade + show button — only when collapsed and there's transcript to hide */}
+              {hasTranscript && !transcriptExpanded && (
+                <>
+                  <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background via-background/90 to-transparent pointer-events-none rounded-b-2xl" />
+                  <div className="absolute inset-x-0 bottom-6 flex justify-center">
+                    <button
+                      onClick={() => setTranscriptExpanded(true)}
+                      className="px-4 py-2 rounded-lg bg-background border border-border text-[12px] font-medium hover:border-muted-light transition-colors shadow-sm"
+                    >
+                      Show full transcript
+                    </button>
                   </div>
-                ))
-              ) : (
-                <p className="text-[13px] text-muted-light text-center py-8">Transcript not available for this interview.</p>
+                </>
               )}
             </div>
+
+            {hasTranscript && transcriptExpanded && (
+              <div className="mt-3 flex justify-center">
+                <button
+                  onClick={() => setTranscriptExpanded(false)}
+                  className="text-[12px] text-muted hover:text-foreground transition-colors"
+                >
+                  Hide transcript
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Completed timestamp */}
-          {interview.completedAt && (
-            <p className="mt-6 text-[11px] text-muted-light text-center">
-              Completed {new Date(interview.completedAt).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })}
-            </p>
-          )}
         </div>
       </div>
     </AppShell>

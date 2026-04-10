@@ -2,11 +2,25 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Check, Clock, Send, Copy, Link2, Plus, User, Search, X, ArrowRight, Mail } from "lucide-react";
+import { Check, Clock, Copy, Link2, Plus, User, Search, X, ArrowRight } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
 import { useCompanyData } from "@/lib/company-data";
-import { pendingContributors } from "@/lib/mock-data";
+
+interface PendingInvite {
+  id: string;
+  token: string;
+  status: "invited" | "in_progress" | "completed";
+  invited_at: string;
+  completed_at: string | null;
+  contributors: {
+    id: string;
+    name: string;
+    email: string | null;
+    role: string | null;
+    department: string | null;
+  } | null;
+}
 
 const DEPT_COLORS: Record<string, string> = {
   Marketing: "#a855f7", Sales: "#22c55e", Operations: "#f59e0b",
@@ -26,12 +40,23 @@ type SortKey = "date" | "name" | "dept";
 export default function InterviewsPage() {
   const { interviews, contributors } = useCompanyData();
   const [showInvite, setShowInvite] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [sortBy, setSortBy] = useState<SortKey>("date");
   const [sortOpen, setSortOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<"completed" | "pending">("completed");
   const sortRef = useRef<HTMLDivElement>(null);
+
+  // Invite form state
+  const [inviteName, setInviteName] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [createdInviteUrl, setCreatedInviteUrl] = useState<string | null>(null);
+  const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null);
+
+  // Pending invites from DB
+  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
+  const [pendingLoading, setPendingLoading] = useState(false);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -41,8 +66,72 @@ export default function InterviewsPage() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  const fetchPendingInvites = async () => {
+    setPendingLoading(true);
+    try {
+      const res = await fetch("/api/invite");
+      if (res.ok) {
+        const data = await res.json();
+        const pending = (data || []).filter((t: PendingInvite) => t.status !== "completed");
+        setPendingInvites(pending);
+      }
+    } catch {
+      // silent fail
+    } finally {
+      setPendingLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingInvites();
+  }, []);
+
+  const handleCreateInvite = async () => {
+    if (!inviteName.trim() && !inviteEmail.trim()) {
+      setInviteError("Enter a name or email");
+      return;
+    }
+    setInviteError(null);
+    setInviteLoading(true);
+    try {
+      const res = await fetch("/api/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: inviteName.trim() || undefined,
+          email: inviteEmail.trim() || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setInviteError(data.error || "Failed to create invite");
+        return;
+      }
+      const data = await res.json();
+      setCreatedInviteUrl(data.interviewUrl);
+      fetchPendingInvites();
+    } catch {
+      setInviteError("Network error");
+    } finally {
+      setInviteLoading(false);
+    }
+  };
+
+  const handleCopyInviteLink = async (url: string, id: string) => {
+    await navigator.clipboard.writeText(url);
+    setCopiedInviteId(id);
+    setTimeout(() => setCopiedInviteId(null), 2000);
+  };
+
+  const resetInviteModal = () => {
+    setShowInvite(false);
+    setInviteName("");
+    setInviteEmail("");
+    setInviteError(null);
+    setCreatedInviteUrl(null);
+  };
+
   const completed = interviews.filter((iv) => iv.status === "completed");
-  const invited = interviews.filter((iv) => iv.status === "invited");
 
   // Build display list with contributor info
   let displayList = completed.map((iv) => {
@@ -63,21 +152,13 @@ export default function InterviewsPage() {
   if (sortBy === "name") displayList.sort((a, b) => (a.person?.name || "").localeCompare(b.person?.name || ""));
   if (sortBy === "dept") displayList.sort((a, b) => (a.person?.department || "").localeCompare(b.person?.department || ""));
 
-  const fullLink = typeof window !== "undefined" ? `${window.location.origin}/interview/zippy-zaps-abc123` : "/interview/zippy-zaps-abc123";
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(fullLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   return (
     <AppShell>
       <div className="flex-1 flex flex-col min-h-0">
         <PageHeader title="Interviews">
           <button
             onClick={() => setShowInvite(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent text-white text-[12px] font-medium hover:bg-accent-hover transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-foreground text-background text-[12px] font-medium hover:bg-foreground/80 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" strokeWidth={2} />
             New interview
@@ -86,67 +167,105 @@ export default function InterviewsPage() {
 
         {/* New interview modal */}
         {showInvite && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-6" onClick={() => setShowInvite(false)}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6" onClick={resetInviteModal}>
             <div className="absolute inset-0 bg-black/30" />
             <div className="relative w-full max-w-md bg-background rounded-2xl border border-border shadow-2xl" onClick={(e) => e.stopPropagation()}>
               <div className="px-6 py-4 border-b border-border flex items-center justify-between">
                 <h2 className="text-[15px] font-semibold">New interview</h2>
-                <button onClick={() => setShowInvite(false)} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted hover:text-foreground hover:bg-surface transition-colors">
+                <button onClick={resetInviteModal} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted hover:text-foreground hover:bg-surface transition-colors">
                   <X className="w-4 h-4" strokeWidth={2} />
                 </button>
               </div>
 
               <div className="p-6 space-y-5">
-                {/* Copy link */}
-                <div>
-                  <p className="text-[12px] font-medium mb-2">Share interview link</p>
-                  <div className="flex gap-2">
-                    <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl bg-surface border border-border text-[12px] text-muted overflow-hidden">
-                      <Link2 className="w-3.5 h-3.5 text-muted-light shrink-0" strokeWidth={1.5} />
-                      <span className="truncate">{fullLink}</span>
+                {!createdInviteUrl ? (
+                  <>
+                    <p className="text-[13px] text-muted leading-relaxed">
+                      Create an interview link for a teammate. They&apos;ll be able to fill in any details we don&apos;t know yet during the conversation.
+                    </p>
+
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-[11px] font-medium text-muted mb-1.5">Name</label>
+                        <input
+                          value={inviteName}
+                          onChange={(e) => setInviteName(e.target.value)}
+                          placeholder="Alice Chen"
+                          className="w-full h-10 px-3 rounded-xl bg-surface border border-border text-[13px] placeholder:text-muted-light focus:outline-none focus:border-foreground/30"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-medium text-muted mb-1.5">Email <span className="text-muted-light font-normal">(optional)</span></label>
+                        <input
+                          value={inviteEmail}
+                          onChange={(e) => setInviteEmail(e.target.value)}
+                          placeholder="alice@company.com"
+                          type="email"
+                          className="w-full h-10 px-3 rounded-xl bg-surface border border-border text-[13px] placeholder:text-muted-light focus:outline-none focus:border-foreground/30"
+                        />
+                      </div>
                     </div>
-                    <button onClick={handleCopyLink} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-border text-[12px] font-medium hover:border-muted-light transition-colors shrink-0">
-                      {copied ? <Check className="w-3.5 h-3.5 text-green-600" strokeWidth={2} /> : <Copy className="w-3.5 h-3.5" strokeWidth={1.5} />}
-                      {copied ? "Copied" : "Copy"}
+
+                    {inviteError && (
+                      <p className="text-[12px] text-red-600">{inviteError}</p>
+                    )}
+
+                    <button
+                      onClick={handleCreateInvite}
+                      disabled={inviteLoading || (!inviteName.trim() && !inviteEmail.trim())}
+                      className="w-full h-10 rounded-xl bg-foreground text-background text-[13px] font-medium hover:bg-foreground/80 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {inviteLoading ? "Creating..." : "Create invite link"}
+                      {!inviteLoading && <ArrowRight className="w-3.5 h-3.5" strokeWidth={2} />}
                     </button>
-                  </div>
-                </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 border border-green-200">
+                      <Check className="w-4 h-4 text-green-600 shrink-0" strokeWidth={2} />
+                      <p className="text-[12px] text-green-800">Invite link created. Share it however you like.</p>
+                    </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-[11px] text-muted-light">or</span>
-                  <div className="flex-1 h-px bg-border" />
-                </div>
+                    <div>
+                      <p className="text-[11px] font-medium text-muted mb-1.5">Interview link</p>
+                      <div className="flex gap-2">
+                        <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl bg-surface border border-border text-[12px] text-muted overflow-hidden">
+                          <Link2 className="w-3.5 h-3.5 text-muted-light shrink-0" strokeWidth={1.5} />
+                          <span className="truncate">{createdInviteUrl}</span>
+                        </div>
+                        <button
+                          onClick={() => handleCopyInviteLink(createdInviteUrl, "modal")}
+                          className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-border text-[12px] font-medium hover:border-muted-light transition-colors shrink-0"
+                        >
+                          {copiedInviteId === "modal" ? (
+                            <><Check className="w-3.5 h-3.5 text-green-600" strokeWidth={2} />Copied</>
+                          ) : (
+                            <><Copy className="w-3.5 h-3.5" strokeWidth={1.5} />Copy</>
+                          )}
+                        </button>
+                      </div>
+                    </div>
 
-                {/* Invite by email */}
-                <div>
-                  <p className="text-[12px] font-medium mb-2">Invite by email</p>
-                  <div className="flex gap-2">
-                    <input placeholder="name@company.com" className="flex-1 h-10 px-3 rounded-xl bg-surface border border-border text-[13px] placeholder:text-muted-light focus:outline-none focus:border-accent/40" />
-                    <button className="flex items-center gap-1.5 px-4 h-10 rounded-xl bg-accent text-white text-[12px] font-medium hover:bg-accent-hover transition-colors shrink-0">
-                      <Mail className="w-3.5 h-3.5" strokeWidth={2} />
-                      Send
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-[11px] text-muted-light">or</span>
-                  <div className="flex-1 h-px bg-border" />
-                </div>
-
-                {/* Start now */}
-                <div>
-                  <Link
-                    href="/interview/zippy-zaps-abc123"
-                    target="_blank"
-                    className="flex items-center justify-center gap-2 w-full h-10 rounded-xl border border-border text-[13px] font-medium hover:border-muted-light transition-colors"
-                  >
-                    Start an interview now
-                    <ArrowRight className="w-3.5 h-3.5" strokeWidth={2} />
-                  </Link>
-                </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setCreatedInviteUrl(null);
+                          setInviteName("");
+                          setInviteEmail("");
+                        }}
+                        className="flex-1 h-10 rounded-xl border border-border text-[13px] font-medium text-muted hover:text-foreground transition-colors"
+                      >
+                        Create another
+                      </button>
+                      <button
+                        onClick={resetInviteModal}
+                        className="flex-1 h-10 rounded-xl bg-foreground text-background text-[13px] font-medium hover:bg-foreground/80 transition-colors"
+                      >
+                        Done
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -161,7 +280,7 @@ export default function InterviewsPage() {
                 Completed ({completed.length})
               </button>
               <button onClick={() => setTab("pending")} className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${tab === "pending" ? "bg-background text-foreground shadow-sm" : "text-muted"}`}>
-                Pending ({invited.length})
+                Pending ({pendingInvites.length})
               </button>
             </div>
 
@@ -253,35 +372,48 @@ export default function InterviewsPage() {
         {/* Pending tab */}
         {tab === "pending" && (
           <div className="flex-1 overflow-y-auto scroll-thin px-6 py-6">
-            {invited.length === 0 ? (
+            {pendingLoading ? (
+              <div className="py-16 text-center">
+                <p className="text-[13px] text-muted">Loading...</p>
+              </div>
+            ) : pendingInvites.length === 0 ? (
               <div className="py-16 text-center">
                 <p className="text-[13px] text-muted">No pending invites</p>
                 <button onClick={() => setShowInvite(true)} className="mt-2 text-[12px] text-accent hover:text-accent-hover">Invite someone →</button>
               </div>
             ) : (
               <div className="space-y-2">
-                {invited.map((iv) => {
-                  const person = pendingContributors.find((c) => c.id === iv.contributorId);
-                  if (!person) return null;
+                {pendingInvites.map((inv) => {
+                  const person = inv.contributors;
+                  const displayName = person?.name || "Unnamed teammate";
+                  const displayMeta = [person?.role, person?.department, person?.email].filter(Boolean).join(" · ") || "Awaiting details";
+                  const inviteUrl = typeof window !== "undefined" ? `${window.location.origin}/interview/${inv.token}` : `/interview/${inv.token}`;
+                  const isCopied = copiedInviteId === inv.id;
                   return (
-                    <div key={iv.id} className="flex items-center justify-between p-4 rounded-xl border border-dashed border-border">
+                    <div key={inv.id} className="flex items-center justify-between p-4 rounded-xl border border-dashed border-border">
                       <div className="flex items-center gap-3">
                         <div className="w-7 h-7 rounded-full bg-surface border border-border flex items-center justify-center">
                           <User className="w-3.5 h-3.5 text-muted-light" strokeWidth={1.5} />
                         </div>
                         <div>
-                          <p className="text-[13px] font-medium">{person.name}</p>
-                          <p className="text-[11px] text-muted-light">{person.role} · {person.department} · {person.email}</p>
+                          <p className="text-[13px] font-medium">{displayName}</p>
+                          <p className="text-[11px] text-muted-light">{displayMeta}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="flex items-center gap-1 text-[11px] text-muted-light">
                           <Clock className="w-3 h-3" strokeWidth={1.5} />
-                          Invited {iv.invitedAt ? timeAgo(iv.invitedAt) : ""}
+                          {inv.status === "in_progress" ? "In progress" : `Invited ${timeAgo(inv.invited_at)}`}
                         </span>
-                        <button className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border text-[11px] font-medium text-muted hover:text-foreground hover:border-muted-light transition-colors">
-                          <Send className="w-3 h-3" strokeWidth={1.5} />
-                          Resend
+                        <button
+                          onClick={() => handleCopyInviteLink(inviteUrl, inv.id)}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border text-[11px] font-medium text-muted hover:text-foreground hover:border-muted-light transition-colors"
+                        >
+                          {isCopied ? (
+                            <><Check className="w-3 h-3 text-green-600" strokeWidth={2} />Copied</>
+                          ) : (
+                            <><Copy className="w-3 h-3" strokeWidth={1.5} />Copy link</>
+                          )}
                         </button>
                       </div>
                     </div>

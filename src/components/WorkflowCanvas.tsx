@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
-import { ZoomIn, ZoomOut, Maximize2, Sparkles, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, Hand } from "lucide-react";
+import { ZoomIn, ZoomOut, Maximize2, Sun, DollarSign, Megaphone, TrendingUp, Wrench, FlaskConical, PackageSearch, Hand } from "lucide-react";
 import type { Task } from "@/lib/types";
 
 const DEPT_CONFIG: Record<string, { bg: string; light: string; Icon: typeof DollarSign }> = {

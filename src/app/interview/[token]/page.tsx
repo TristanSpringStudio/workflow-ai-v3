@@ -51,7 +51,7 @@ interface TokenContext {
   token: string;
   company_id: string;
   contributor_id: string | null;
-  companies: { id: string; name: string } | null;
+  companies: { id: string; name: string; logo_url: string | null } | null;
   contributors: { id: string; name: string; email: string; role: string; department: string } | null;
 }
 
@@ -70,6 +70,8 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
     tools: [], workflows: [], painPoints: [], handoffs: [],
   });
   const [submitted, setSubmitted] = useState(false);
+  const [interviewComplete, setInterviewComplete] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [tokenCtx, setTokenCtx] = useState<TokenContext | null>(null);
   const [tokenError, setTokenError] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -78,8 +80,15 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
   // The conversation history sent to the API (plain role+content, no UI metadata)
   const apiMessages = messages.map((m) => ({ role: m.role, content: m.content }));
 
-  // Resolved company name — from DB or fallback
+  // Resolved company name + logo — from DB or fallback
   const companyName = tokenCtx?.companies?.name || company.name;
+  const companyLogoUrl = tokenCtx?.companies?.logo_url || null;
+  const companyInitials = companyName
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   // Look up the token on mount
   useEffect(() => {
@@ -166,7 +175,12 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
       const res = await fetch("/api/interview/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: msgs, companyName, userName: welcomeName }),
+        body: JSON.stringify({
+          messages: msgs,
+          companyName,
+          userName: welcomeName,
+          companyId: tokenCtx?.company_id,
+        }),
       });
 
       if (!res.ok) throw new Error("API error");
@@ -189,9 +203,11 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
 
       setMessages((prev) => [...prev, assistantMsg]);
 
-      // Check if interview is complete
+      // Surface a Submit button inline once the AI signals completion.
+      // We deliberately do NOT auto-navigate so the user can read the
+      // closing message and decide when to submit (or keep adding context).
       if (data.interviewComplete) {
-        setTimeout(() => setPhase("summary"), 1500);
+        setInterviewComplete(true);
       }
     } catch (error) {
       console.error("Interview API error:", error);
@@ -208,7 +224,7 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
       setIsTyping(false);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, []);
+  }, [companyName, welcomeName, tokenCtx?.company_id]);
 
   const startInterview = () => {
     setPhase("chat");
@@ -241,6 +257,28 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
     callInterviewAPI(fullHistory);
   };
 
+  const submitInterview = async () => {
+    if (submitting || submitted) return;
+    setSubmitting(true);
+    setSubmitted(true);
+    setPhase("done");
+    if (tokenCtx) {
+      try {
+        await fetch("/api/interview/complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tokenId: tokenCtx.id,
+            companyId: tokenCtx.company_id,
+            transcript: messages.map((m) => ({ role: m.role, content: m.content })),
+            extractedData: extracted,
+          }),
+        });
+      } catch {}
+    }
+    setSubmitting(false);
+  };
+
   const togglePill = (pill: string) => {
     setSelectedPills((prev) => {
       const next = new Set(prev);
@@ -260,9 +298,18 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
         <div className="w-full max-w-md">
           {/* Company branding */}
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-foreground flex items-center justify-center text-[14px] font-bold text-background">
-              {companyName.split(" ").map((w) => w[0]).join("")}
-            </div>
+            {companyLogoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={companyLogoUrl}
+                alt={`${companyName} logo`}
+                className="w-10 h-10 rounded-xl object-cover bg-surface border border-border"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-xl bg-foreground flex items-center justify-center text-[14px] font-bold text-background">
+                {companyInitials}
+              </div>
+            )}
             <div>
               <p className="text-[15px] font-semibold">{companyName}</p>
               <p className="text-[12px] text-muted-light">Powered by Vishtan</p>
@@ -294,7 +341,7 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
           <button
             onClick={startInterview}
             disabled={!welcomeName.trim()}
-            className="w-full h-11 rounded-xl bg-accent text-white text-[14px] font-medium hover:bg-accent-hover transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full h-11 rounded-xl bg-foreground text-background text-[14px] font-medium hover:bg-foreground/80 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             Start interview
             <ArrowRight className="w-4 h-4" strokeWidth={2} />
@@ -341,9 +388,18 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
         {/* Minimal header */}
         <div className="h-14 border-b border-border px-6 flex items-center">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-foreground flex items-center justify-center text-[9px] font-bold text-background">
-              {companyName.split(" ").map((w) => w[0]).join("")}
-            </div>
+            {companyLogoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={companyLogoUrl}
+                alt={`${companyName} logo`}
+                className="w-6 h-6 rounded-lg object-cover bg-surface border border-border"
+              />
+            ) : (
+              <div className="w-6 h-6 rounded-lg bg-foreground flex items-center justify-center text-[9px] font-bold text-background">
+                {companyInitials}
+              </div>
+            )}
             <span className="text-[13px] font-medium">{companyName}</span>
             <span className="text-muted-light">/</span>
             <span className="text-[13px] text-muted">Interview Summary</span>
@@ -432,29 +488,12 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
               Back to interview
             </button>
             <button
-              onClick={async () => {
-                setSubmitted(true);
-                setPhase("done");
-                // Persist to Supabase
-                if (tokenCtx) {
-                  try {
-                    await fetch("/api/interview/complete", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        tokenId: tokenCtx.id,
-                        companyId: tokenCtx.company_id,
-                        transcript: messages.map((m) => ({ role: m.role, content: m.content })),
-                        extractedData: extracted,
-                      }),
-                    });
-                  } catch {}
-                }
-              }}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-white text-[13px] font-medium hover:bg-accent-hover transition-colors"
+              onClick={submitInterview}
+              disabled={submitting}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-foreground text-background text-[13px] font-medium hover:bg-foreground/80 transition-colors disabled:opacity-50"
             >
               <Check className="w-4 h-4" strokeWidth={2} />
-              Confirm & Submit
+              {submitting ? "Submitting..." : "Confirm & Submit"}
             </button>
           </div>
         </div>
@@ -468,9 +507,18 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
       {/* Minimal header */}
       <div className="shrink-0 h-14 border-b border-border px-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-foreground flex items-center justify-center text-[9px] font-bold text-background">
-            {companyName.split(" ").map((w) => w[0]).join("")}
-          </div>
+          {companyLogoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={companyLogoUrl}
+              alt={`${companyName} logo`}
+              className="w-6 h-6 rounded-lg object-cover bg-surface border border-border"
+            />
+          ) : (
+            <div className="w-6 h-6 rounded-lg bg-foreground flex items-center justify-center text-[9px] font-bold text-background">
+              {companyInitials}
+            </div>
+          )}
           <span className="text-[13px] font-medium">{companyName}</span>
           <span className="text-muted-light">/</span>
           <span className="text-[13px] text-muted">Interview</span>
@@ -483,12 +531,7 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
         <div className="max-w-xl mx-auto space-y-4">
           {messages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-              {msg.role === "assistant" && (
-                <div className="shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center mr-2.5 mt-0.5">
-                  <svg className="w-3.5 h-3.5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25" /></svg>
-                </div>
-              )}
-              <div className={`max-w-[80%] ${msg.role === "user" ? "px-4 py-2.5 rounded-2xl rounded-br-md bg-accent text-white text-[14px]" : "text-[14px] leading-relaxed"}`}>
+              <div className={`max-w-[80%] ${msg.role === "user" ? "px-4 py-2.5 rounded-2xl rounded-br-md bg-surface text-foreground text-[14px]" : "text-[14px] leading-relaxed text-muted"}`}>
                 {msg.content.split("\n").map((line, i) => (<p key={i} className={i > 0 ? "mt-2" : ""}>{line}</p>))}
 
                 {msg.pills && (
@@ -497,7 +540,7 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
                       const sel = selectedPills.has(pill);
                       const logo = getLogo(pill);
                       return (
-                        <button key={pill} onClick={() => togglePill(pill)} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] border transition-colors ${sel ? "bg-accent/10 border-accent/30 text-accent" : "bg-surface border-border hover:border-accent/30 hover:text-accent"}`}>
+                        <button key={pill} onClick={() => togglePill(pill)} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] border transition-colors ${sel ? "bg-foreground/5 border-foreground/20 text-foreground" : "bg-surface border-border hover:border-foreground/20 hover:text-foreground"}`}>
                           {logo && <Image src={logo} alt={pill} width={14} height={14} unoptimized />}
                           {pill}
                         </button>
@@ -509,7 +552,7 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
                 {msg.options && (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {msg.options.map((opt) => (
-                      <button key={opt.value} onClick={() => handleSend(opt.label)} className="px-3.5 py-1.5 rounded-xl text-[13px] font-medium border border-border hover:border-accent/30 hover:text-accent transition-colors">
+                      <button key={opt.value} onClick={() => handleSend(opt.label)} className="px-3.5 py-1.5 rounded-xl text-[13px] font-medium border border-border hover:border-foreground/20 hover:text-foreground transition-colors">
                         {opt.label}
                       </button>
                     ))}
@@ -520,38 +563,75 @@ export default function InterviewPage({ params }: { params: Promise<{ token: str
           ))}
 
           {isTyping && <MessageShimmer />}
+
+          {/* Inline submit panel — appears once the AI signals the interview is complete.
+              Stays visible so the user can read the closing message and decide when to submit
+              (or keep typing to add more context). */}
+          {interviewComplete && !isTyping && (
+            <div className="pt-2 flex flex-col items-start gap-3">
+              <div className="flex items-center gap-2.5">
+                <button
+                  onClick={submitInterview}
+                  disabled={submitting}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-foreground text-background text-[13px] font-medium hover:bg-foreground/80 transition-colors disabled:opacity-50"
+                >
+                  <Check className="w-3.5 h-3.5" strokeWidth={2} />
+                  {submitting ? "Submitting..." : "Submit interview"}
+                </button>
+                <button
+                  onClick={() => setPhase("summary")}
+                  disabled={submitting}
+                  className="px-4 py-2 rounded-xl border border-border text-[13px] font-medium text-muted hover:text-foreground hover:border-foreground/20 transition-colors disabled:opacity-50"
+                >
+                  Review what we captured
+                </button>
+              </div>
+              <p className="text-[11px] text-muted-light">
+                Or keep typing below if you have more to add.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Input */}
       <div className="shrink-0 border-t border-border bg-background px-6 py-3">
         <div className="max-w-xl mx-auto">
-          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2 items-end">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                // Auto-resize
-                const el = e.target;
-                el.style.height = "auto";
-                el.style.height = Math.min(el.scrollHeight, 120) + "px"; // 120px ≈ 5 lines
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              placeholder="Type your response..."
-              disabled={isTyping}
-              rows={1}
-              className="flex-1 min-h-[40px] max-h-[120px] px-4 py-2.5 rounded-xl bg-surface border border-border text-[14px] placeholder:text-muted-light focus:outline-none focus:border-accent/40 focus:ring-2 focus:ring-accent/10 disabled:opacity-50 resize-none leading-snug"
-            />
-            <button type="submit" disabled={isTyping || !input.trim()} className="h-10 w-10 rounded-xl bg-accent text-white flex items-center justify-center hover:bg-accent-hover transition-colors disabled:opacity-20 shrink-0">
-              <Send className="w-4 h-4" strokeWidth={2} />
-            </button>
-          </form>
+          <div className="chat-border rounded-xl">
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+              className="flex items-end gap-2 px-3 py-2"
+            >
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  const el = e.target;
+                  el.style.height = "auto";
+                  el.style.height = Math.min(el.scrollHeight, 160) + "px";
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder="Type your response..."
+                disabled={isTyping}
+                rows={1}
+                autoFocus
+                className="flex-1 min-h-[28px] max-h-[160px] bg-transparent text-[14px] placeholder:text-muted-light focus:outline-none disabled:opacity-50 resize-none leading-snug py-1"
+              />
+              <button
+                type="submit"
+                disabled={isTyping || !input.trim()}
+                className="w-8 h-8 rounded-lg bg-foreground text-background flex items-center justify-center hover:bg-foreground/80 transition-colors disabled:opacity-20 shrink-0"
+              >
+                <Send className="w-3.5 h-3.5" strokeWidth={2} />
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>

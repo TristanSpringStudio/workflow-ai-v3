@@ -7,6 +7,7 @@ create table companies (
   name text not null,
   industry text,
   size text, -- e.g. "1-10", "11-50", "51-200"
+  logo_url text, -- public Supabase Storage URL for company logo
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -138,6 +139,17 @@ create table roadmap_phases (
   created_at timestamptz default now()
 );
 
+-- ─── AI Chats (assistant conversation history) ───
+create table ai_chats (
+  id uuid default gen_random_uuid() primary key,
+  company_id uuid references companies(id) on delete cascade not null,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  title text not null default 'New AI chat',
+  messages jsonb default '[]'::jsonb, -- array of {id, role, content}
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
 -- ─── Row Level Security ───
 
 alter table companies enable row level security;
@@ -150,6 +162,7 @@ alter table workflow_contributors enable row level security;
 alter table recommendations enable row level security;
 alter table assessments enable row level security;
 alter table roadmap_phases enable row level security;
+alter table ai_chats enable row level security;
 
 -- Users can only see their own company's data
 create policy "Users see own company" on companies
